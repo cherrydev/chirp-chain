@@ -1,0 +1,73 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0099cc"
+    tools:context="com.cherrydev.chirpchain.activity.Chirp"
+    android:fitsSystemWindows="true"
+    >
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:orientation="horizontal"
+            android:id="@+id/statusContainer">
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/listContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/editViewMessageText"
+            android:layout_below="@+id/statusContainer"
+            android:orientation="vertical">
+            <ListView
+                android:animateLayoutChanges="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/messageListView"
+                />
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="#33b5e5"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="No Messages"
+                android:id="@+id/emptyView"
+                android:visibility="gone"/>
+            </LinearLayout>
+
+
+        <EditText
+            android:background="@color/background_material_light"
+            android:textColor="@android:color/black"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:minHeight="50dp"
+            android:id="@+id/editViewMessageText"
+            android:hint="New Message"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:imeActionLabel="Send To…"
+            />
+
+
+
+    </RelativeLayout>
+</FrameLayout>
