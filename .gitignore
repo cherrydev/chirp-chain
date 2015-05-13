@@ -1,2 +1,5 @@
 chirp-chain-android/build
 chirp-chain-android/app/build
+chirp-chain-android/.gradle
+chirp-chain-android/.idea
+chirp-chain-android/local.properties
