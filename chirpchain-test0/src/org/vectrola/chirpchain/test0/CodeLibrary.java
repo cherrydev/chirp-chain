@@ -30,6 +30,7 @@ public class CodeLibrary {
         for(int i = 0; i < NUM_SYMBOLS; ++i) {
             l.codeSamples[i] = makeChirpCodeForSymbol(i);
         }
+        /*
         Random r = new Random();
         for(int i = 0; i < NUM_SYMBOLS; ++i) {
             int j = r.nextInt(NUM_SYMBOLS);
@@ -37,6 +38,7 @@ public class CodeLibrary {
             l.codeSamples[i] = l.codeSamples[j];
             l.codeSamples[j] = t;
         }
+        */
 
         return l;
     }
@@ -109,7 +111,6 @@ public class CodeLibrary {
 
     private static abstract class PhaseGenerator {
         protected double time = 0d;
-        Random r = new Random();
 
         protected double getDPhasePerDT(double t) {
             return 0d;

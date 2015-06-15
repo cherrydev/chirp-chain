@@ -7,19 +7,37 @@ import java.io.IOException;
  */
 public class Main {
     public static void main(String[] args) throws IOException {
-        System.out.print("Hello world!\n");
+        System.out.print("Generating code library\n");
 
         CodeLibrary l = CodeLibrary.makeChirpCodes();
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             //l.getCodeForSymbol(i).writeToFile(String.format("chirp%03d.wav", i));
         }
 
+        System.out.print("Encoding string\n");
+
         encodeString("Hello world!").writeToFile("helloworld.wav");
 
+        System.out.print("Fingerprinting library\n");
+
         CodeRecognizer cr = new CodeRecognizer(l);
+
+        /*
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             printFingerprint(cr, i);
         }
+        */
+        System.out.print("Recognizing!\n");
+        cr.process(SampleSeries.readFromFile("helloworld-challenge.wav"));
+        while(cr.hasNextSymbol()) {
+            int sym = cr.nextSymbol();
+            float t = cr.getLastSymbolTime();
+            if(sym >= 0) {
+                System.out.print(String.format("Recognized '%c' (%d) at %.4fs\n", (char)sym, sym, t));
+            }
+        }
+
+        System.out.print("Done.\n");
     }
 
     private static void printFingerprint(CodeRecognizer cr, int symbol) {

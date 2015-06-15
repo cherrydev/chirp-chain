@@ -10,7 +10,7 @@ public class FrequencyTransformer {
     public static final float ROW_TIME = 0.01f;
     public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
     public static final float MIN_FREQUENCY = 1000f;
-    public static final float MAX_FREQUENCY = 5000f;
+    public static final float MAX_FREQUENCY = 3200f;
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / 100f) + 1;
     public static final int TOTAL_ROWS = (int) Math.ceil(TIME_WINDOW / ROW_TIME);
     public static final float WAVELET_WINDOW = ROW_TIME * 2f;
@@ -71,9 +71,11 @@ public class FrequencyTransformer {
     }
 
     public void addSamples(SampleSeries samples) {
-        sampleBuffer.add(samples);
-        pendingSamples += samples.size();
-        tryConsumeSamples();
+        if(samples.size() > 0) {
+            sampleBuffer.add(samples);
+            pendingSamples += samples.size();
+            tryConsumeSamples();
+        }
     }
 
     public void getBinRows(float[] dest, int numRows)
@@ -143,6 +145,7 @@ public class FrequencyTransformer {
                 break;
             }
             consumedSamples -= firstSeries.size();
+            pendingSamples -= firstSeries.size();
             sampleBuffer.remove(0);
         }
     }
