@@ -11,7 +11,7 @@ public class Main {
 
         CodeLibrary l = CodeLibrary.makeChirpCodes();
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            l.getCodeForSymbol(i).writeToFile(String.format("chirp%02d.wav", i));
+            //l.getCodeForSymbol(i).writeToFile(String.format("chirp%03d.wav", i));
         }
 
         encodeString("Hello world!").writeToFile("helloworld.wav");
@@ -29,7 +29,7 @@ public class Main {
         for(int j = 0; j < fp.length / FrequencyTransformer.BINS_PER_ROW; ++j) {
             System.out.print('|');
             for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                System.out.print(graphChars[Math.max(0, Math.min(graphChars.length - 1, (int)Math.floor(graphChars.length * 0.005f * fp[j * FrequencyTransformer.BINS_PER_ROW + i])))]);
+                System.out.print(graphChars[Math.max(0, Math.min(graphChars.length - 1, (int)Math.floor(graphChars.length * fp[j * FrequencyTransformer.BINS_PER_ROW + i])))]);
             }
             System.out.println('|');
         }
@@ -38,18 +38,17 @@ public class Main {
 
     public static SampleSeries encodeString(String s) {
         CodeLibrary l = CodeLibrary.makeChirpCodes();
-        int slen = 0;
+        int slen = (int)Math.ceil(l.getMaxCodeLength() * SampleSeries.SAMPLE_RATE) * s.length();
         SampleSeries series;
 
-        for (int i = 0; i < s.length(); ++i) {
-            int c = (int)s.charAt(i);
-            int sym0 = (c & 0xF), sym1 = ((c >> 4) & 0xF);
-            slen += l.getCodeForSymbol(sym0).size() + l.getCodeForSymbol(sym1).size();
-        }
         series = new SampleSeries(slen);
         int j = 0;
         for (int i = 0; i < s.length(); ++i) {
             int c = (int) s.charAt(i);
+            SampleSeries symSS = l.getCodeForSymbol(c);
+            System.arraycopy(symSS.getSamples(), 0, series.getSamples(), j, symSS.size());
+            j += symSS.size();
+            /*
             int sym0 = (c & 0xF), sym1 = ((c >> 4) & 0xF);
             SampleSeries sym0SS = l.getCodeForSymbol(sym0);
             SampleSeries sym1SS = l.getCodeForSymbol(sym1);
@@ -57,6 +56,7 @@ public class Main {
             j += sym0SS.size();
             System.arraycopy(sym1SS.getSamples(), 0, series.getSamples(), j, sym1SS.size());
             j += sym1SS.size();
+            */
         }
 
         return series;

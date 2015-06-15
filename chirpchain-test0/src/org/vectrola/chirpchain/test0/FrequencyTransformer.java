@@ -9,8 +9,8 @@ public class FrequencyTransformer {
     public static final float TIME_WINDOW = 1f;
     public static final float ROW_TIME = 0.01f;
     public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
-    public static final float MIN_FREQUENCY = 2000f;
-    public static final float MAX_FREQUENCY = 6000f;
+    public static final float MIN_FREQUENCY = 1000f;
+    public static final float MAX_FREQUENCY = 5000f;
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / 100f) + 1;
     public static final int TOTAL_ROWS = (int) Math.ceil(TIME_WINDOW / ROW_TIME);
     public static final float WAVELET_WINDOW = ROW_TIME * 2f;
@@ -53,8 +53,8 @@ public class FrequencyTransformer {
             float f = MIN_FREQUENCY + ((float)j / (BINS_PER_ROW - 1)) * (MAX_FREQUENCY - MIN_FREQUENCY);
             for(int i = 0; i < WAVELET_WINDOW_SAMPLES; ++i) {
                 double phase = 2d * Math.PI * f * i / SampleSeries.SAMPLE_RATE;
-                motherWavelets[sinOffset + i] = waveletWindow[i] * (float)Math.sin(phase);
-                motherWavelets[cosOffset + i] = waveletWindow[i] * (float)Math.cos(phase);
+                motherWavelets[sinOffset + i] = waveletWindow[i] * (float)Math.sin(phase) * 4f / WAVELET_WINDOW_SAMPLES;
+                motherWavelets[cosOffset + i] = waveletWindow[i] * (float)Math.cos(phase) * 4f / WAVELET_WINDOW_SAMPLES;
             }
             /*
             try {

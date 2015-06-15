@@ -1,10 +1,12 @@
 package org.vectrola.chirpchain.test0;
 
+import java.util.Random;
+
 /**
  * Created by jlunder on 6/10/15.
  */
 public class CodeLibrary {
-    public static int NUM_SYMBOLS = 16;
+    public static int NUM_SYMBOLS = 256;
 
     private SampleSeries[] codeSamples = new SampleSeries[NUM_SYMBOLS];
 
@@ -25,66 +27,89 @@ public class CodeLibrary {
     public static CodeLibrary makeChirpCodes() {
         CodeLibrary l = new CodeLibrary();
 
-        for(int a = 0; a < 2; ++a) {
-            float freqMin = 2000f + a * 1000f;
-            float freqRange = 500f;
-            float freqMid = freqMin + 1500f;
-            float freqMax = freqMin + 3000f;
-
-            SampleSeries sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearSweep(sample, 0f, 0.1f, freqMin, freqMin, makeStandardAdsrEnvelope(0.1f));
-            generateLinearSweep(sample, 0.125f, 0.1f, freqMid, freqMax, makeStandardAdsrEnvelope(0.1f));
-            l.codeSamples[a * 8 + 0] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearWarble(sample, 0f, 0.225f, freqMid, freqRange, 10f, makeStandardAdsrEnvelope(0.225f));
-            l.codeSamples[a * 8 + 1] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearSweep(sample, 0f, 0.075f, freqMax, freqMin, makeStandardAdsrEnvelope(0.075f));
-            generateLinearSweep(sample, 0.075f, 0.075f, freqMax, freqMin, makeStandardAdsrEnvelope(0.075f));
-            generateLinearSweep(sample, 0.15f, 0.075f, freqMax, freqMin, makeStandardAdsrEnvelope(0.075f));
-            l.codeSamples[a * 8 + 2] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearWarble(sample, 0f, 0.225f, freqMid, freqRange, 0.67f / 0.225f, makeStandardAdsrEnvelope(0.225f));
-            l.codeSamples[a * 8 + 3] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearSweep(sample, 0f, 0.1f, freqMid, freqMid, makeStandardAdsrEnvelope(0.1f));
-            generateLinearSweep(sample, 0.125f, 0.1f, freqMax, freqMin, makeStandardAdsrEnvelope(0.1f));
-            l.codeSamples[a * 8 + 4] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearSweep(sample, 0f, 0.1f, freqMid, freqMax, makeStandardAdsrEnvelope(0.1f));
-            generateLinearSweep(sample, 0.125f, 0.1f, freqMid, freqMax, makeStandardAdsrEnvelope(0.1f));
-            l.codeSamples[a * 8 + 5] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearSweep(sample, 0f, 0.1f, freqMax, freqMax, makeStandardAdsrEnvelope(0.1f));
-            generateLinearSweep(sample, 0.125f, 0.1f, freqMid, freqMax, makeStandardAdsrEnvelope(0.1f));
-            l.codeSamples[a * 8 + 6] = sample;
-
-            sample = new SampleSeries((int)Math.rint(SampleSeries.SAMPLE_RATE * 0.25f));
-            generateLinearWarble(sample, 0f, 0.225f, freqMax - freqRange, -freqRange, 1f / 0.225f, makeStandardAdsrEnvelope(0.225f));
-            l.codeSamples[a * 8 + 7] = sample;
+        for(int i = 0; i < NUM_SYMBOLS; ++i) {
+            l.codeSamples[i] = makeChirpCodeForSymbol(i);
+        }
+        Random r = new Random();
+        for(int i = 0; i < NUM_SYMBOLS; ++i) {
+            int j = r.nextInt(NUM_SYMBOLS);
+            SampleSeries t = l.codeSamples[i];
+            l.codeSamples[i] = l.codeSamples[j];
+            l.codeSamples[j] = t;
         }
 
         return l;
     }
 
-    public static AdsrEnvelope makeStandardAdsrEnvelope(float duration) {
+    private static final float CODE_DURATION = 0.5f;
+    private static final float BASE_FREQ = 1500;
+    private static final float[] FREQ_SERIES = new float[] {
+            BASE_FREQ * (float)Math.pow(2.0f, 0 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 3 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 6 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 9 * 1.0f / 12.0f),
+    };
+
+    private static SampleSeries makeChirpCodeForSymbol(int symbol) {
+        SampleSeries code = new SampleSeries((int)Math.ceil(0.5f * SampleSeries.SAMPLE_RATE));
+        int modeA = (symbol >> 0) & 0x07;
+        int modeB = (symbol >> 4) & 0x07;
+        float durationA = 0.15f;
+        float durationB = 0.25f;
+
+        makeChirpComponent(code, 0.0f, durationA, modeA, ((symbol & 0x08) == 0) ? FREQ_SERIES[0] : FREQ_SERIES[2]);
+        makeChirpComponent(code, durationA, durationB, modeB, ((symbol & 0x80) == 0) ? FREQ_SERIES[1] : FREQ_SERIES[3]);
+        return code;
+    }
+
+    private static void makeChirpComponent(SampleSeries code, float start, float duration, int mode, float frequency)
+    {
+        switch(mode) {
+            case 0:
+                generateLinearSweep(code, start, duration, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                break;
+            case 1:
+                generateLinearSweep(code, start + duration * 0.00f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                generateLinearSweep(code, start + duration * 0.25f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                generateLinearSweep(code, start + duration * 0.50f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                generateLinearSweep(code, start + duration * 0.75f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                //generateLinearWarble(code, start, duration, frequency, frequency * 0.25f, 0.5f / duration, makeStandardAdsrEnvelope(duration));
+                break;
+            case 2:
+                generateLinearWarble(code, start, duration, frequency, frequency * 0.25f, 1f / duration, makeStandardAdsrEnvelope(duration));
+                break;
+            case 3:
+                generateLinearSweep(code, start, duration, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
+                break;
+            case 4:
+                generateLinearWarble(code, start, duration, frequency, frequency * -0.25f, 0.5f / duration, makeStandardAdsrEnvelope(duration));
+                break;
+            case 5:
+                generateLinearWarble(code, start, duration, frequency, frequency * -0.25f, 1f / duration, makeStandardAdsrEnvelope(duration));
+                break;
+            case 6:
+                generateLinearSweep(code, start + duration * 0.0f, duration * 0.5f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                generateLinearSweep(code, start + duration * 0.5f, duration * 0.5f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                break;
+            case 7:
+                generateLinearSweep(code, start + duration * 0.0f, duration * 0.5f, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
+                generateLinearSweep(code, start + duration * 0.5f, duration * 0.5f, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
+                break;
+        }
+    }
+
+    /*
+    private static AdsrEnvelope makeStandardAdsrEnvelope(float duration) {
         return new AdsrEnvelope(0.001f, 0.8f, 0.02f, 0.4f, duration - 0.031f, 0.01f);
+    }
+    */
+    private static AdsrEnvelope makeStandardAdsrEnvelope(float duration) {
+        return new AdsrEnvelope(0.001f, 0.8f, 0f, 0.8f, duration - 0.011f, 0.01f);
     }
 
     private static abstract class PhaseGenerator {
-        protected double time;
-
-        public PhaseGenerator() {
-            this.time = 0d;
-        }
+        protected double time = 0d;
+        Random r = new Random();
 
         protected double getDPhasePerDT(double t) {
             return 0d;
