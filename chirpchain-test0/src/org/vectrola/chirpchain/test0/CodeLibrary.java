@@ -6,7 +6,7 @@ import java.util.Random;
  * Created by jlunder on 6/10/15.
  */
 public class CodeLibrary {
-    public static int NUM_SYMBOLS = 256;
+    public static int NUM_SYMBOLS = 16;
 
     private SampleSeries[] codeSamples = new SampleSeries[NUM_SYMBOLS];
 
@@ -46,58 +46,67 @@ public class CodeLibrary {
     private static final float CODE_DURATION = 0.5f;
     private static final float BASE_FREQ = 1500;
     private static final float[] FREQ_SERIES = new float[] {
+            /*
             BASE_FREQ * (float)Math.pow(2.0f, 0 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 1 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 2 * 1.0f / 12.0f),
             BASE_FREQ * (float)Math.pow(2.0f, 3 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 4 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 5 * 1.0f / 12.0f),
             BASE_FREQ * (float)Math.pow(2.0f, 6 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 7 * 1.0f / 12.0f),
+            BASE_FREQ * (float)Math.pow(2.0f, 8 * 1.0f / 12.0f),
             BASE_FREQ * (float)Math.pow(2.0f, 9 * 1.0f / 12.0f),
+            */
+            BASE_FREQ * (1f + 0f / 4f),
+            BASE_FREQ * (1f + 1f / 4f),
+            BASE_FREQ * (1f + 2f / 4f),
+            BASE_FREQ * (1f + 3f / 4f),
+            BASE_FREQ * (1f + 4f / 4f),
+            BASE_FREQ * (1f + 5f / 4f),
+            BASE_FREQ * (1f + 6f / 4f),
+            BASE_FREQ * (1f + 7f / 4f),
+            BASE_FREQ * (1f + 8f / 4f),
+            BASE_FREQ * (1f + 9f / 4f),
+            BASE_FREQ * (1f + 10f / 4f),
     };
 
     private static SampleSeries makeChirpCodeForSymbol(int symbol) {
-        SampleSeries code = new SampleSeries((int)Math.ceil(0.5f * SampleSeries.SAMPLE_RATE));
-        int modeA = (symbol >> 0) & 0x07;
-        int modeB = (symbol >> 4) & 0x07;
-        float durationA = 0.15f;
-        float durationB = 0.25f;
+        int modeA = (symbol >> 0) & 0x03;
+        int modeB = (symbol >> 2) & 0x03;
+        float dur = 0.20f;
+        SampleSeries code = null;
+        float f0;
+        float f1;
 
-        makeChirpComponent(code, 0.0f, durationA, modeA, ((symbol & 0x08) == 0) ? FREQ_SERIES[0] : FREQ_SERIES[2]);
-        makeChirpComponent(code, durationA, durationB, modeB, ((symbol & 0x80) == 0) ? FREQ_SERIES[1] : FREQ_SERIES[3]);
-        return code;
-    }
-
-    private static void makeChirpComponent(SampleSeries code, float start, float duration, int mode, float frequency)
-    {
-        switch(mode) {
+        switch(modeA) {
             case 0:
-                generateLinearSweep(code, start, duration, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
+                f0 = FREQ_SERIES[modeB + 1];
+                f1 = FREQ_SERIES[modeB + 7];
+                code = generateLinearSweep(dur, f0, f1);
                 break;
             case 1:
-                generateLinearSweep(code, start + duration * 0.00f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                generateLinearSweep(code, start + duration * 0.25f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                generateLinearSweep(code, start + duration * 0.50f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                generateLinearSweep(code, start + duration * 0.75f, duration * 0.25f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                //generateLinearWarble(code, start, duration, frequency, frequency * 0.25f, 0.5f / duration, makeStandardAdsrEnvelope(duration));
+                f0 = FREQ_SERIES[modeB + 7];
+                f1 = FREQ_SERIES[modeB + 1];
+                code = generateLinearSweep(dur, f0, f1);
                 break;
             case 2:
-                generateLinearWarble(code, start, duration, frequency, frequency * 0.25f, 1f / duration, makeStandardAdsrEnvelope(duration));
+                f0 = FREQ_SERIES[modeB * 2 + 2];
+                f1 = FREQ_SERIES[modeB * 2 + 0];
+                code = generateLinearSweep(dur / 3, f0, f1);
+                code.append(generateLinearSweep(dur / 3, f0, f1));
+                code.append(generateLinearSweep(dur / 3, f0, f1));
                 break;
             case 3:
-                generateLinearSweep(code, start, duration, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
-                break;
-            case 4:
-                generateLinearWarble(code, start, duration, frequency, frequency * -0.25f, 0.5f / duration, makeStandardAdsrEnvelope(duration));
-                break;
-            case 5:
-                generateLinearWarble(code, start, duration, frequency, frequency * -0.25f, 1f / duration, makeStandardAdsrEnvelope(duration));
-                break;
-            case 6:
-                generateLinearSweep(code, start + duration * 0.0f, duration * 0.5f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                generateLinearSweep(code, start + duration * 0.5f, duration * 0.5f, frequency * 0.75f, frequency * 1.25f, makeStandardAdsrEnvelope(duration));
-                break;
-            case 7:
-                generateLinearSweep(code, start + duration * 0.0f, duration * 0.5f, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
-                generateLinearSweep(code, start + duration * 0.5f, duration * 0.5f, frequency * 1.25f, frequency * 0.75f, makeStandardAdsrEnvelope(duration));
+                f0 = FREQ_SERIES[modeB * 2 + 0];
+                f1 = FREQ_SERIES[modeB * 2 + 2];
+                code = generateLinearSweep(dur / 3, f0, f1);
+                code.append(generateLinearSweep(dur / 3, f0, f1));
+                code.append(generateLinearSweep(dur / 3, f0, f1));
                 break;
         }
+
+        return code;
     }
 
     /*
@@ -161,17 +170,21 @@ public class CodeLibrary {
         }
     }
 
-    private static void generateLinearSweep(SampleSeries samples, float startTime, float duration,
-                                            float startFrequency, float finishFrequency, AdsrEnvelope envelope) {
-        generateLinearToneSweep(samples, startTime, duration,
-                new SweepPhaseGenerator(duration, startFrequency, finishFrequency), envelope);
+    private static SampleSeries generateLinearSweep(float duration, float startFrequency, float finishFrequency) {
+        SampleSeries samples = new SampleSeries((int) Math.rint(duration * SampleSeries.SAMPLE_RATE));
+        generateLinearToneSweep(samples, 0f, duration,
+                new SweepPhaseGenerator(duration, startFrequency, finishFrequency),
+                makeStandardAdsrEnvelope(duration));
+        return samples;
     }
 
-    private static void generateLinearWarble(SampleSeries samples, float startTime, float duration,
-                                             double centerFrequency, double frequencyRange, double modulationFrequency,
-                                             AdsrEnvelope envelope) {
-        generateLinearToneSweep(samples, startTime, duration,
-                new WarblePhaseGenerator(centerFrequency, frequencyRange, modulationFrequency), envelope);
+    private static SampleSeries generateLinearWarble(float duration, double centerFrequency, double frequencyRange,
+                                                     double modulationFrequency) {
+        SampleSeries samples = new SampleSeries((int) Math.rint(duration * SampleSeries.SAMPLE_RATE));
+        generateLinearToneSweep(samples, 0f, duration,
+                new WarblePhaseGenerator(centerFrequency, frequencyRange, modulationFrequency),
+                makeStandardAdsrEnvelope(duration));
+        return samples;
     }
 
     private static void generateLinearToneSweep(SampleSeries samples, float startTime, float duration,

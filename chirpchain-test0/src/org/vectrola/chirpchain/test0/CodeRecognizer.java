@@ -9,8 +9,7 @@ public class CodeRecognizer {
     private FrequencyTransformer frequencyTransformer = new FrequencyTransformer();
     private CodeLibrary library;
     private int maxCodeRows;
-    private float[][] codeFingerprints =
-            new float[CodeLibrary.NUM_SYMBOLS][maxCodeRows * FrequencyTransformer.BINS_PER_ROW];
+    private CodeFingerprint[] codeFingerprints;
     private boolean hasNextSymbol;
     private int nextSymbol;
     private float time = 0f;
@@ -20,34 +19,10 @@ public class CodeRecognizer {
     public CodeRecognizer(CodeLibrary library) {
         this.library = library;
         this.maxCodeRows = (int)Math.ceil(library.getMaxCodeLength() / FrequencyTransformer.ROW_TIME);
-
-        SampleSeries pad = new SampleSeries(FrequencyTransformer.ROW_SAMPLES - 1);
-        SampleSeries phasePads[] = new SampleSeries[8];
-        for(int i = 0; i < phasePads.length; ++i) {
-            phasePads[i] = new SampleSeries((int)((float)i * FrequencyTransformer.ROW_SAMPLES / phasePads.length));
-        }
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            SampleSeries code = library.getCodeForSymbol(i);
-            int fingerprintRows = Math.max(0, ((code.size() - FrequencyTransformer.WAVELET_WINDOW_SAMPLES) / FrequencyTransformer.ROW_SAMPLES) + 1);
-            float[] accumulatedFP = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
-            for(int j = 0; j < phasePads.length; ++j) {
-                FrequencyTransformer fingerprinter = new FrequencyTransformer();
-                fingerprinter.addSamples(phasePads[j]);
-                fingerprinter.addSamples(code);
-                fingerprinter.addSamples(pad);
-
-                assert fingerprintRows <= maxCodeRows;
-                float[] fp = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
-                fingerprinter.getBinRows(fp, fingerprintRows);
-                for(int k = 0; k < accumulatedFP.length; ++k) {
-                    accumulatedFP[k] += fp[k] * (1f / phasePads.length);
-                }
-            }
-            codeFingerprints[i] = accumulatedFP;
-        }
+        this.codeFingerprints = CodeFingerprint.fingerprintLibrary(library);
     }
 
-    public float[] getFingerprintForSymbol(int symbol)
+    public CodeFingerprint getFingerprintForSymbol(int symbol)
     {
         return codeFingerprints[symbol];
     }
@@ -75,28 +50,19 @@ public class CodeRecognizer {
     }
 
     private void tryFillNextSymbol() {
-        float[] input = new float[maxCodeRows * FrequencyTransformer.BINS_PER_ROW];
-        while (!hasNextSymbol && frequencyTransformer.availableRows() >= maxCodeRows) {
-            frequencyTransformer.getBinRows(input, maxCodeRows);
-            float bestCorr = 0.01f;
-            int bestSym = -1;
+        while (!hasNextSymbol && FingerprintMatcher.canMatch(this)) {
+            FingerprintMatcher matcher = new FingerprintMatcher(this);
+            int matchSym = matcher.getMatch();
 
-            for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-                float corr = correlation(codeFingerprints[i], input);
-                if(corr > bestCorr) {
-                    bestCorr = corr;
-                    bestSym = i;
-                }
-            }
-
-            if(bestSym != -1) {
-                int codeRows = codeFingerprints[bestSym].length / FrequencyTransformer.BINS_PER_ROW;
+            if(matchSym != -1) {
+                assert matchSym != -1;
+                int codeRows = codeFingerprints[matchSym].getMatchRows();
                 hasNextSymbol = true;
                 rowsSinceSymbolDetected = 0;
-                nextSymbol = bestSym;
+                nextSymbol = matchSym;
                 lastSymbolTime = time;
-                time += (codeRows - 1) * FrequencyTransformer.ROW_TIME;
-                frequencyTransformer.discardRows(codeRows - 1);
+                time += codeRows * FrequencyTransformer.ROW_TIME;
+                frequencyTransformer.discardRows(codeRows);
             }
             else {
                 ++rowsSinceSymbolDetected;
@@ -111,29 +77,190 @@ public class CodeRecognizer {
         }
     }
 
-    private float correlation(float[] fp, float[] input)
-    {
+    public static class CodeFingerprint {
+        float[] bins;
+        float[] peaks;
+        float[] peakStrengths;
+
+        public float[] getBins() {
+            return bins;
+        }
+
+        public float[] getPeaks() {
+            return peaks;
+        }
+
+        public float[] getPeakStrengths() {
+            return peakStrengths;
+        }
+
+        public int getMatchRows() {
+            return peaks.length;
+        }
+
+        public CodeFingerprint() {
+        }
+
+        public CodeFingerprint(SampleSeries code) {
+            FrequencyTransformer ft = new FrequencyTransformer();
+            SampleSeries pad = new SampleSeries(FrequencyTransformer.ROW_SAMPLES - 1);
+            SampleSeries phasePads[] = new SampleSeries[8];
+            for(int i = 0; i < phasePads.length; ++i) {
+                phasePads[i] = new SampleSeries((int)((float)i * FrequencyTransformer.ROW_SAMPLES / phasePads.length));
+            }
+
+            fingerprintCode(code, ft, phasePads, pad);
+        }
+
+        protected CodeFingerprint(SampleSeries code, FrequencyTransformer ft, SampleSeries[] phasePads, SampleSeries pad) {
+            fingerprintCode(code, ft, phasePads, pad);
+        }
+
+        protected void fingerprintCode(SampleSeries code, FrequencyTransformer ft, SampleSeries[] phasePads, SampleSeries pad) {
+            int fingerprintRows = Math.max(0, ((code.size() - FrequencyTransformer.WAVELET_WINDOW_SAMPLES) / FrequencyTransformer.ROW_SAMPLES) + 1);
+            float[] accumulatedFP = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
+            for (int j = 0; j < phasePads.length; ++j) {
+                ft.flush();
+                ft.addSamples(phasePads[j]);
+                ft.addSamples(code);
+                ft.addSamples(pad);
+
+                float[] fp = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
+                ft.getBinRows(fp, fingerprintRows);
+                for (int k = 0; k < accumulatedFP.length; ++k) {
+                    accumulatedFP[k] += fp[k] * (1f / phasePads.length);
+                }
+            }
+            bins = accumulatedFP;
+
+            peaks = new float[fingerprintRows];
+            peakStrengths = new float[fingerprintRows];
+            findPeaks(bins, peaks, peakStrengths);
+        }
+
+        public static CodeFingerprint[] fingerprintLibrary(CodeLibrary library) {
+            CodeFingerprint[] fingerprints = new CodeFingerprint[CodeLibrary.NUM_SYMBOLS];
+
+            FrequencyTransformer ft = new FrequencyTransformer();
+            SampleSeries pad = new SampleSeries(FrequencyTransformer.ROW_SAMPLES - 1);
+            SampleSeries phasePads[] = new SampleSeries[8];
+            for(int i = 0; i < phasePads.length; ++i) {
+                phasePads[i] = new SampleSeries((int)((float)i * FrequencyTransformer.ROW_SAMPLES / phasePads.length));
+            }
+
+            for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+                SampleSeries code = library.getCodeForSymbol(i);
+                fingerprints[i] = new CodeFingerprint(code, ft, phasePads, pad);
+            }
+
+            return fingerprints;
+        }
+
+        public static void findPeaks(float[] fingerprint, float[] peaks, float[] peakStrengths) {
+            int rows = fingerprint.length / FrequencyTransformer.BINS_PER_ROW;
+            for(int j = 0; j < rows; ++j) {
+                int rowOffset = j * FrequencyTransformer.BINS_PER_ROW;
+                int peak = 0;
+                for(int i = 1; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    if(fingerprint[rowOffset + i] > fingerprint[rowOffset + peak]) {
+                        peak = i;
+                    }
+                }
+                peaks[j] = FrequencyTransformer.BIN_FREQUENCIES[peak];
+                peakStrengths[j] = fingerprint[rowOffset + peak];
+            }
+        }
+    }
+
+    private static class FingerprintMatcher {
+        CodeFingerprint[] codeFingerprints;
+        FrequencyTransformer frequencyTransformer;
+        float[] inputFingerprint;
+        float[] inputPeaks;
+        float[] inputPeakStrengths;
+
+        public FingerprintMatcher(CodeRecognizer cr) {
+            this.codeFingerprints = cr.codeFingerprints;
+            this.frequencyTransformer = cr.frequencyTransformer;
+            this.inputFingerprint = new float[cr.maxCodeRows * FrequencyTransformer.BINS_PER_ROW];
+            this.inputPeaks = new float[cr.maxCodeRows];
+            this.inputPeakStrengths = new float[cr.maxCodeRows];
+
+            frequencyTransformer.getBinRows(this.inputFingerprint, cr.maxCodeRows);
+            CodeFingerprint.findPeaks(inputFingerprint, inputPeaks, inputPeakStrengths);
+        }
+
+        public static boolean canMatch(CodeRecognizer cr) {
+            return cr.frequencyTransformer.availableRows() >= cr.maxCodeRows;
+        }
+
+        public int getMatch() {
+            int bestSym = -1;
+            float bestQ = 0f;
+            float secondQ = 0f;
+
+            for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+                float q = matchQuality(codeFingerprints[i], inputPeaks);
+                if(q > bestQ) {
+                    secondQ = bestQ;
+                    bestQ = q;
+                    bestSym = i;
+                }
+            }
+
+            if(bestQ > 0.8f && secondQ < 0.5f) {
+                return bestSym;
+            }
+            else {
+                return -1;
+            }
+        }
+    }
+
+    public static float matchQuality(CodeFingerprint fp, float[] inputPeaks) {
+        int hits = 0;
+        for(int i = 0; i < fp.peaks.length; ++i) {
+            if(Math.abs(inputPeaks[i] - fp.peaks[i]) < FrequencyTransformer.BIN_BANDWIDTH * 1.5f) {
+                ++hits;
+            }
+        }
+        return (float)hits / fp.peaks.length;
+    }
+
+    public static float mean(float[] vals) {
+        float sum = 0f;
+
+        for (int i = 0; i < vals.length; ++i) {
+            sum += vals[i];
+        }
+
+        return sum / vals.length;
+    }
+
+    public static float stddev(float[] vals, float ex) {
+        float sumsq = 0f;
+
+        for (int i = 0; i < vals.length; ++i) {
+            float diff = vals[i] - ex;
+            sumsq += diff * diff;
+        }
+
+        return (float)Math.sqrt(sumsq / vals.length);
+    }
+
+    public static float covariance(float[] fp, float fpEx, float[] input, float inputEx) {
         int length = Math.min(fp.length, input.length);
-        float meanFP = 0f, meanInput = 0, stdDevFP = 0, stdDevInput = 0f;
-
-        for(int i = 0; i < length; ++i) {
-            meanFP += fp[i];
-            meanInput += input[i];
-        }
-        meanFP /= length;
-        meanInput /= length;
-
-        for(int i = 0; i < length; ++i) {
-            stdDevFP += (fp[i] - meanFP) * (fp[i] - meanFP);
-            stdDevInput += (input[i] - meanInput) * (input[i] - meanInput);
-        }
-        stdDevFP /= length;
-        stdDevInput /= length;
 
         float cov = 0f;
-        for(int i = 0; i < length; ++i) {
-            cov += (fp[i] - meanFP) * (input[i] - meanInput);
+        for (int i = 0; i < length; ++i) {
+            cov += (fp[i] - fpEx) * (input[i] - inputEx);
         }
-        return cov / (length * stdDevFP * stdDevInput);
+        cov /= length;
+
+        return cov;
+    }
+
+    public static float correlation(float[] fp, float fpEx, float[] input, float inputEx) {
+        return covariance(fp, fpEx, input, inputEx) / (stddev(fp, fpEx) * stddev(input, inputEx));
     }
 }

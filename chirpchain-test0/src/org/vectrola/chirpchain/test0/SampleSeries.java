@@ -14,14 +14,27 @@ public class SampleSeries {
 
     private float[] samples = null;
 
+    public SampleSeries() {
+    }
+
     public SampleSeries(int numSamples) {
         samples = new float[numSamples];
     }
 
     public void resize(int newSize) {
         float[] newSamples = new float[newSize];
-        System.arraycopy(samples, 0, newSamples, 0, Math.min(samples.length, newSize));
+        if(samples != null) {
+            System.arraycopy(samples, 0, newSamples, 0, Math.min(samples.length, newSize));
+        }
         samples = newSamples;
+    }
+
+    public void append(SampleSeries newSeries) {
+        int start = samples.length;
+        resize(size() + newSeries.size());
+        if(newSeries.size() > 0) {
+            System.arraycopy(newSeries.samples, 0, samples, start, newSeries.samples.length);
+        }
     }
 
     public void setSample(int index, float value) {
@@ -33,7 +46,7 @@ public class SampleSeries {
     }
 
     public int size() {
-        return samples.length;
+        return samples == null ? 0 : samples.length;
     }
 
     public float[] getSamples() {
