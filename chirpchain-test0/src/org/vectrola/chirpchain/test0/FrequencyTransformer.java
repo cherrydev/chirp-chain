@@ -10,7 +10,7 @@ public class FrequencyTransformer {
     public static final float ROW_TIME = 0.01f;
     public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
     public static final float MIN_FREQUENCY = 1000f;
-    public static final float MAX_FREQUENCY = 5500f;
+    public static final float MAX_FREQUENCY = 6000f;
     public static final float BIN_BANDWIDTH = 100f;
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / BIN_BANDWIDTH) + 1;
     public static final int TOTAL_ROWS = (int) Math.ceil(TIME_WINDOW / ROW_TIME);

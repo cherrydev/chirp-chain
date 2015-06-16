@@ -16,7 +16,7 @@ public class Main {
 
         System.out.print("Encoding string\n");
 
-        SampleSeries hw = encodeString("Hello world!");
+        SampleSeries hw = encodeString(l, "Hello world!");
         hw.writeToFile("helloworld.wav");
 
         System.out.print("Fingerprinting library\n");
@@ -59,7 +59,7 @@ public class Main {
             float[] inputPeakStrengths = new float[inputPeaks.length];
             CodeRecognizer.CodeFingerprint.findPeaks(cr.getFingerprintForSymbol(i).getBins(), inputPeaks, inputPeakStrengths);
             for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
-                float q = CodeRecognizer.matchQuality(cr.getFingerprintForSymbol(j), inputPeaks);
+                float q = CodeRecognizer.matchQuality(cr.getFingerprintForSymbol(j).getPeaks(), inputPeaks);
                 System.out.print(String.format("  %5.2f", q));
             }
             System.out.println();
@@ -93,16 +93,15 @@ public class Main {
         System.out.println();
     }
 
-    public static SampleSeries encodeString(String s) {
-        CodeLibrary l = CodeLibrary.makeChirpCodes();
+    public static SampleSeries encodeString(CodeLibrary l, String s) {
         int mcs = (int)Math.ceil(l.getMaxCodeLength() * SampleSeries.SAMPLE_RATE);
         SampleSeries series;
 
         if(CodeLibrary.NUM_SYMBOLS == 256) {
-            series = new SampleSeries(mcs * s.length());
+            series = new SampleSeries(mcs * (s.length() + 1));
         }
         else if(CodeLibrary.NUM_SYMBOLS == 16) {
-            series = new SampleSeries(mcs * s.length() * 2);
+            series = new SampleSeries(mcs * (s.length() + 1) * 2);
         }
         else {
             return null;

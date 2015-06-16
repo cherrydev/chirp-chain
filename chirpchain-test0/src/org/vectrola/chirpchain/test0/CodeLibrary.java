@@ -25,71 +25,92 @@ public class CodeLibrary {
         return max;
     }
 
+    private static float[] computeNewEntryCrossMatch(Vector<CodeEntry> entries, CodeEntry e) {
+        float[] matchQs = new float[entries.size()];
+        for(int i = 0; i < entries.size(); ++i) {
+            CodeEntry ea = entries.get(i);
+            float q = e.getCodeMatchQ(ea);
+            matchQs[i] = q;
+            if(q > e.highestQ) {
+                e.highestQ = q;
+            }
+            e.totalQ += q;
+        }
+        e.totalQ /= entries.size();
+        return matchQs;
+    }
+
+    private static void computeCrossMatch(Vector<CodeEntry> entries) {
+        for(CodeEntry e: entries) {
+            e.highestQ = 0;
+            e.totalQ = 0;
+        }
+        for(int j = 0; j < entries.size(); ++j) {
+            CodeEntry ea = entries.get(j);
+            for(int i = j + 1; i < entries.size(); ++i) {
+                CodeEntry eb = entries.get(i);
+                float q = ea.getCodeMatchQ(eb);
+                if(q > ea.highestQ) {
+                    ea.highestQ = q;
+                }
+                if(q > eb.highestQ) {
+                    eb.highestQ = q;
+                }
+                ea.totalQ += q;
+                eb.totalQ += q;
+            }
+            ea.totalQ /= (entries.size() - 1);
+        }
+    }
+
+    private static CodeEntry findMaxHighestQEntry(Vector<CodeEntry> entries) {
+        CodeEntry hqe = entries.get(0);
+        for(CodeEntry e: entries) {
+            if(e.highestQ > hqe.highestQ) {
+                hqe = e;
+            }
+        }
+
+        return hqe;
+    }
+
+    private static CodeEntry findMaxTotalQEntry(Vector<CodeEntry> entries) {
+        CodeEntry hqe = entries.get(0);
+        for(CodeEntry e: entries) {
+            if(e.totalQ > hqe.totalQ) {
+                hqe = e;
+            }
+        }
+
+        return hqe;
+    }
+
     public static CodeLibrary makeChirpCodes() {
         Random r = new Random();
         Vector<CodeEntry> entries = new Vector<CodeEntry>();
 
-        for(int i = 0; i < 50; ++i) {
+        for(int i = 0; i < NUM_SYMBOLS; ++i) {
             entries.add(new CodeEntry(r));
         }
-        for(int k = 0; entries.size() > NUM_SYMBOLS; ++k) {
-            for(CodeEntry e: entries) {
-                e.highestQ = 0;
+        for(int k = 0; k < 10000; ++k) {
+            computeCrossMatch(entries);
+            float averageQ = 0f;
+            for(CodeEntry ee: entries) {
+                averageQ += ee.totalQ / entries.size();
             }
-            for(int j = 0; j < entries.size(); ++j) {
-                for(int i = j + 1; i < entries.size(); ++i) {
-                    CodeEntry ea = entries.get(j);
-                    CodeEntry eb = entries.get(i);
-                    float q = ea.getCodeMatchQ(eb);
-                    if(q > ea.highestQ) {
-                        ea.highestQ = q;
-                    }
-                    if(q > eb.highestQ) {
-                        eb.highestQ = q;
-                    }
-                    ea.totalQ += q;
-                    eb.totalQ += q;
-                }
+            CodeEntry hqe = findMaxHighestQEntry(entries);
+
+            CodeEntry e = new CodeEntry(r);
+            float[] matchQs = computeNewEntryCrossMatch(entries, e);
+
+            if(e.totalQ >= averageQ || e.highestQ >= hqe.highestQ) {
+                continue;
             }
 
-            CodeEntry hqe;
             // Remove 1/2 of worst match
-            hqe = entries.get(0);
-            for(CodeEntry e: entries) {
-                if(e.highestQ > hqe.highestQ) {
-                    hqe = e;
-                }
-            }
             System.out.println(String.format("Removing entry: highestQ = %g", hqe.highestQ));
             entries.remove(hqe);
-
-            if(k < 1000) {
-                for (int i = 0; i < 10; ++i) {
-                    // Remove worst-connected match
-                    hqe = entries.get(0);
-                    for (CodeEntry e : entries) {
-                        if (e.totalQ >= hqe.totalQ) {
-                            hqe = e;
-                        }
-                    }
-                    System.out.println(String.format("Removing entry: totalQ = %g", hqe.totalQ));
-                    entries.remove(hqe);
-                }
-                while(entries.size() < 50) {
-                    entries.add(new CodeEntry(r));
-                }
-            }
-            else {
-                // Remove worst-connected match
-                hqe = entries.get(0);
-                for (CodeEntry e : entries) {
-                    if (e.totalQ >= hqe.totalQ) {
-                        hqe = e;
-                    }
-                }
-                System.out.println(String.format("Removing entry: totalQ = %g", hqe.totalQ));
-                entries.remove(hqe);
-            }
+            entries.add(e);
         }
 
         CodeLibrary l = new CodeLibrary();
@@ -107,21 +128,27 @@ public class CodeLibrary {
         public CodeRecognizer.CodeFingerprint fp;
         public float highestQ;
         public float totalQ;
+        public long conflicts;
+        public long tests;
 
         public CodeEntry(Random r) {
-            componentCount = r.nextInt(2) + 2;
+            componentCount = 3;
             params = new int[componentCount * 5];
             for(int i = 0; i < componentCount; ++i) {
                 params[i * 5 + 0] = r.nextInt(2); // style
                 params[i * 5 + 1] = 1 + r.nextInt(2); // repeat
+                params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW * 3 / 4); // freqA
+                params[i * 5 + 3] = params[i * 5 + 2] + r.nextInt(FrequencyTransformer.BINS_PER_ROW * 1 / 4); // freqB
+                /*
                 params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW - 10) + 2; // freqA
-                params[i * 5 + 3] = params[i * 5 + 3] + r.nextInt(7); // freqB
+                params[i * 5 + 3] = params[i * 5 + 3] + 4 + r.nextInt(4); // freqB
+                */
                 if(r.nextBoolean()) {
                     int t = params[i * 5 + 2];
                     params[i * 5 + 2] = params[i * 5 + 3];
                     params[i * 5 + 3] = t;
                 }
-                params[i * 5 + 4] = r.nextInt(params[i * 5 + 1]) + 2 * params[i * 5 + 1]; // dur
+                params[i * 5 + 4] = 8 + r.nextInt(6); // dur
             }
             code = makeChirpCode(componentCount, params);
             fp = new CodeRecognizer.CodeFingerprint(code);
@@ -129,7 +156,47 @@ public class CodeLibrary {
 
         private float getCodeMatchQ(CodeEntry other)
         {
-            return CodeRecognizer.matchQuality(fp, other.fp.peaks);
+            return Math.max(slidingMatchQ(fp.peaks, other.fp.peaks),
+                    slidingMatchQ(other.fp.peaks, fp.peaks));
+        }
+
+        private static float slidingMatchQ(float[] peaksA, float[] peaksB) {
+            float bestQ = 0f;
+            float[] testBed = new float[peaksB.length];
+            int minOffset, maxOffset;
+            if(peaksA.length <= peaksB.length) {
+                minOffset = -peaksA.length / 2;
+                maxOffset = peaksB.length - peaksA.length / 2;
+            }
+            else {
+                minOffset = (peaksB.length) / 2 - peaksA.length;
+                maxOffset = (peaksB.length + 1) / 2;
+            }
+            for(int i = minOffset; i <= maxOffset; ++i) {
+                int srcPos = 0;
+                int destPos = i;
+                int size = peaksA.length;
+
+                if(destPos < 0) {
+                    srcPos = -destPos;
+                    size += destPos;
+                    destPos = 0;
+                }
+                if (destPos + size > peaksB.length) {
+                    size = peaksB.length - destPos;
+                }
+
+                System.arraycopy(peaksA, srcPos, testBed, destPos, size);
+                for(int j = 0; j < destPos; ++j) {
+                    testBed[j] = 0f;
+                }
+                for(int j = destPos + size; j < testBed.length; ++j) {
+                    testBed[j] = 0f;
+                }
+
+                bestQ = Math.max(CodeRecognizer.matchQuality(testBed, peaksB), bestQ);
+            }
+            return bestQ;
         }
     }
 
@@ -143,7 +210,7 @@ public class CodeLibrary {
     }
 
     private static SampleSeries makeChirpCodeComponent(int style, int repeat, int freqA, int freqB, int dur) {
-        float duration = dur * 0.025f;
+        float duration = dur * FrequencyTransformer.ROW_TIME;
         float fa = FrequencyTransformer.MIN_FREQUENCY + FrequencyTransformer.BIN_BANDWIDTH * freqA;
         float fb = FrequencyTransformer.MIN_FREQUENCY + FrequencyTransformer.BIN_BANDWIDTH * freqB;
         SampleSeries code = new SampleSeries();

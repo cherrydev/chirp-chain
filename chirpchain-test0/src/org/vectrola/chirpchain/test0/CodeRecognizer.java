@@ -120,6 +120,11 @@ public class CodeRecognizer {
             peaks = new float[fingerprintRows];
             peakStrengths = new float[fingerprintRows];
             findPeaks(bins, peaks, peakStrengths);
+            for(int i = 0; i < fingerprintRows; ++i) {
+                if(peakStrengths[i] < 0.1f) {
+                    peaks[i] = 0f;
+                }
+            }
         }
 
         public static CodeFingerprint[] fingerprintLibrary(CodeLibrary library) {
@@ -177,7 +182,7 @@ public class CodeRecognizer {
             float secondQ = 0f;
 
             for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-                float q = matchQuality(codeFingerprints[i], inputPeaks);
+                float q = matchQuality(codeFingerprints[i].peaks, inputPeaks);
                 if(q > bestQ) {
                     secondQ = bestQ;
                     bestQ = q;
@@ -185,7 +190,7 @@ public class CodeRecognizer {
                 }
             }
 
-            if(bestQ > 0.8f && secondQ < 0.5f) {
+            if(bestQ > 0.7f && secondQ < 0.5f) {
                 return bestSym;
             }
             else {
@@ -194,14 +199,22 @@ public class CodeRecognizer {
         }
     }
 
-    public static float matchQuality(CodeFingerprint fp, float[] inputPeaks) {
-        int hits = 0;
-        for(int i = 0; i < Math.min(fp.peaks.length, inputPeaks.length); ++i) {
-            if(Math.abs(inputPeaks[i] - fp.peaks[i]) < FrequencyTransformer.BIN_BANDWIDTH * 1.5f) {
-                ++hits;
+    public static float matchQuality(float[] codePeaks, float[] inputPeaks) {
+        int hits = 0, misses = 0;
+        for (int i = 0; i < Math.min(codePeaks.length, inputPeaks.length); ++i) {
+            if (codePeaks[i] > 0f) {
+                if (Math.abs(inputPeaks[i] - codePeaks[i]) < FrequencyTransformer.BIN_BANDWIDTH * 2.5f) {
+                    ++hits;
+                } else {
+                    ++misses;
+                }
             }
         }
-        return (float)hits / fp.peaks.length;
+        if (hits + misses == 0) {
+            return 0f;
+        } else {
+            return (float) hits / (float) (hits + misses);
+        }
     }
 
     public static float mean(float[] vals) {
