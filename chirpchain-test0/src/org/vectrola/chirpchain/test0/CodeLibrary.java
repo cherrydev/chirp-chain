@@ -1,6 +1,7 @@
 package org.vectrola.chirpchain.test0;
 
 import java.util.Random;
+import java.util.Vector;
 
 /**
  * Created by jlunder on 6/10/15.
@@ -25,95 +26,140 @@ public class CodeLibrary {
     }
 
     public static CodeLibrary makeChirpCodes() {
-        CodeLibrary l = new CodeLibrary();
-
-        for(int i = 0; i < NUM_SYMBOLS; ++i) {
-            l.codeSamples[i] = makeChirpCodeForSymbol(i);
-        }
-        /*
         Random r = new Random();
-        for(int i = 0; i < NUM_SYMBOLS; ++i) {
-            int j = r.nextInt(NUM_SYMBOLS);
-            SampleSeries t = l.codeSamples[i];
-            l.codeSamples[i] = l.codeSamples[j];
-            l.codeSamples[j] = t;
+        Vector<CodeEntry> entries = new Vector<CodeEntry>();
+
+        for(int i = 0; i < 50; ++i) {
+            entries.add(new CodeEntry(r));
         }
-        */
+        for(int k = 0; entries.size() > NUM_SYMBOLS; ++k) {
+            for(CodeEntry e: entries) {
+                e.highestQ = 0;
+            }
+            for(int j = 0; j < entries.size(); ++j) {
+                for(int i = j + 1; i < entries.size(); ++i) {
+                    CodeEntry ea = entries.get(j);
+                    CodeEntry eb = entries.get(i);
+                    float q = ea.getCodeMatchQ(eb);
+                    if(q > ea.highestQ) {
+                        ea.highestQ = q;
+                    }
+                    if(q > eb.highestQ) {
+                        eb.highestQ = q;
+                    }
+                    ea.totalQ += q;
+                    eb.totalQ += q;
+                }
+            }
+
+            CodeEntry hqe;
+            // Remove 1/2 of worst match
+            hqe = entries.get(0);
+            for(CodeEntry e: entries) {
+                if(e.highestQ > hqe.highestQ) {
+                    hqe = e;
+                }
+            }
+            System.out.println(String.format("Removing entry: highestQ = %g", hqe.highestQ));
+            entries.remove(hqe);
+
+            if(k < 1000) {
+                for (int i = 0; i < 10; ++i) {
+                    // Remove worst-connected match
+                    hqe = entries.get(0);
+                    for (CodeEntry e : entries) {
+                        if (e.totalQ >= hqe.totalQ) {
+                            hqe = e;
+                        }
+                    }
+                    System.out.println(String.format("Removing entry: totalQ = %g", hqe.totalQ));
+                    entries.remove(hqe);
+                }
+                while(entries.size() < 50) {
+                    entries.add(new CodeEntry(r));
+                }
+            }
+            else {
+                // Remove worst-connected match
+                hqe = entries.get(0);
+                for (CodeEntry e : entries) {
+                    if (e.totalQ >= hqe.totalQ) {
+                        hqe = e;
+                    }
+                }
+                System.out.println(String.format("Removing entry: totalQ = %g", hqe.totalQ));
+                entries.remove(hqe);
+            }
+        }
+
+        CodeLibrary l = new CodeLibrary();
+        for(int i = 0; i < NUM_SYMBOLS; ++i) {
+            l.codeSamples[i] = entries.get(i).code;
+        }
 
         return l;
     }
 
-    private static final float CODE_DURATION = 0.5f;
-    private static final float BASE_FREQ = 1500;
-    private static final float[] FREQ_SERIES = new float[] {
-            /*
-            BASE_FREQ * (float)Math.pow(2.0f, 0 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 1 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 2 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 3 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 4 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 5 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 6 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 7 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 8 * 1.0f / 12.0f),
-            BASE_FREQ * (float)Math.pow(2.0f, 9 * 1.0f / 12.0f),
-            */
-            BASE_FREQ * (1f + 0f / 4f),
-            BASE_FREQ * (1f + 1f / 4f),
-            BASE_FREQ * (1f + 2f / 4f),
-            BASE_FREQ * (1f + 3f / 4f),
-            BASE_FREQ * (1f + 4f / 4f),
-            BASE_FREQ * (1f + 5f / 4f),
-            BASE_FREQ * (1f + 6f / 4f),
-            BASE_FREQ * (1f + 7f / 4f),
-            BASE_FREQ * (1f + 8f / 4f),
-            BASE_FREQ * (1f + 9f / 4f),
-            BASE_FREQ * (1f + 10f / 4f),
-    };
+    private static class CodeEntry {
+        public int componentCount;
+        public int[] params;
+        public SampleSeries code;
+        public CodeRecognizer.CodeFingerprint fp;
+        public float highestQ;
+        public float totalQ;
 
-    private static SampleSeries makeChirpCodeForSymbol(int symbol) {
-        int modeA = (symbol >> 0) & 0x03;
-        int modeB = (symbol >> 2) & 0x03;
-        float dur = 0.20f;
-        SampleSeries code = null;
-        float f0;
-        float f1;
+        public CodeEntry(Random r) {
+            componentCount = r.nextInt(2) + 2;
+            params = new int[componentCount * 5];
+            for(int i = 0; i < componentCount; ++i) {
+                params[i * 5 + 0] = r.nextInt(2); // style
+                params[i * 5 + 1] = 1 + r.nextInt(2); // repeat
+                params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW - 10) + 2; // freqA
+                params[i * 5 + 3] = params[i * 5 + 3] + r.nextInt(7); // freqB
+                if(r.nextBoolean()) {
+                    int t = params[i * 5 + 2];
+                    params[i * 5 + 2] = params[i * 5 + 3];
+                    params[i * 5 + 3] = t;
+                }
+                params[i * 5 + 4] = r.nextInt(params[i * 5 + 1]) + 2 * params[i * 5 + 1]; // dur
+            }
+            code = makeChirpCode(componentCount, params);
+            fp = new CodeRecognizer.CodeFingerprint(code);
+        }
 
-        switch(modeA) {
-            case 0:
-                f0 = FREQ_SERIES[modeB + 1];
-                f1 = FREQ_SERIES[modeB + 7];
-                code = generateLinearSweep(dur, f0, f1);
-                break;
-            case 1:
-                f0 = FREQ_SERIES[modeB + 7];
-                f1 = FREQ_SERIES[modeB + 1];
-                code = generateLinearSweep(dur, f0, f1);
-                break;
-            case 2:
-                f0 = FREQ_SERIES[modeB * 2 + 2];
-                f1 = FREQ_SERIES[modeB * 2 + 0];
-                code = generateLinearSweep(dur / 3, f0, f1);
-                code.append(generateLinearSweep(dur / 3, f0, f1));
-                code.append(generateLinearSweep(dur / 3, f0, f1));
-                break;
-            case 3:
-                f0 = FREQ_SERIES[modeB * 2 + 0];
-                f1 = FREQ_SERIES[modeB * 2 + 2];
-                code = generateLinearSweep(dur / 3, f0, f1);
-                code.append(generateLinearSweep(dur / 3, f0, f1));
-                code.append(generateLinearSweep(dur / 3, f0, f1));
-                break;
+        private float getCodeMatchQ(CodeEntry other)
+        {
+            return CodeRecognizer.matchQuality(fp, other.fp.peaks);
+        }
+    }
+
+    private static SampleSeries makeChirpCode(int componentCount, int[] params) {
+        SampleSeries code = new SampleSeries();
+
+        for(int i = 0; i < componentCount; ++i) {
+            code.append(makeChirpCodeComponent(params[i * 5 + 0], params[i * 5 + 1], params[i * 5 + 2], params[i * 5 + 3], params[i * 5 + 4]));
+        }
+        return code;
+    }
+
+    private static SampleSeries makeChirpCodeComponent(int style, int repeat, int freqA, int freqB, int dur) {
+        float duration = dur * 0.025f;
+        float fa = FrequencyTransformer.MIN_FREQUENCY + FrequencyTransformer.BIN_BANDWIDTH * freqA;
+        float fb = FrequencyTransformer.MIN_FREQUENCY + FrequencyTransformer.BIN_BANDWIDTH * freqB;
+        SampleSeries code = new SampleSeries();
+
+        if(style == 0) {
+            code.append(generateLinearWarble(duration, 0.5f * (fa + fb), 0.5 * (fb - fa), repeat * 0.25f / duration));
+        }
+        else {
+            for (int i = 0; i < repeat; ++i) {
+                code.append(generateLinearSweep(duration / repeat, fa, fb));
+            }
         }
 
         return code;
     }
 
-    /*
-    private static AdsrEnvelope makeStandardAdsrEnvelope(float duration) {
-        return new AdsrEnvelope(0.001f, 0.8f, 0.02f, 0.4f, duration - 0.031f, 0.01f);
-    }
-    */
     private static AdsrEnvelope makeStandardAdsrEnvelope(float duration) {
         return new AdsrEnvelope(0.001f, 0.8f, 0f, 0.8f, duration - 0.011f, 0.01f);
     }

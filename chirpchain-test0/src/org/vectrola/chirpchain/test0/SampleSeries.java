@@ -30,9 +30,9 @@ public class SampleSeries {
     }
 
     public void append(SampleSeries newSeries) {
-        int start = samples.length;
-        resize(size() + newSeries.size());
         if(newSeries.size() > 0) {
+            int start = size();
+            resize(size() + newSeries.size());
             System.arraycopy(newSeries.samples, 0, samples, start, newSeries.samples.length);
         }
     }

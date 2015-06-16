@@ -24,17 +24,7 @@ public class Main {
         CodeRecognizer cr = new CodeRecognizer(l);
 
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            //printFingerprint(cr, i);
-        }
-
-        System.out.print("Recognizing!\n");
-        cr.process(SampleSeries.readFromFile("helloworld-challenge.wav"));
-        while(cr.hasNextSymbol()) {
-            int sym = cr.nextSymbol();
-            float t = cr.getLastSymbolTime();
-            if(sym >= 0) {
-                System.out.print(String.format("Recognized '%c' (%d) at %.4fs\n", (char)sym, sym, t));
-            }
+            printFingerprint(cr, i);
         }
 
         /*
@@ -54,6 +44,8 @@ public class Main {
             }
             System.out.println();
         }
+        */
+
 
         System.out.println("Match quality");
         System.out.print("   ");
@@ -72,7 +64,17 @@ public class Main {
             }
             System.out.println();
         }
-        */
+
+
+        System.out.print("Recognizing! Hoping for 8 4 5 6 12 6 12 6 15 6 0 2 7 7 15 6 2 7 12 6 4 6 1 2\n");
+        cr.process(hw);//SampleSeries.readFromFile("helloworld-challenge.wav"));
+        while(cr.hasNextSymbol()) {
+            int sym = cr.nextSymbol();
+            float t = cr.getLastSymbolTime();
+            if(sym >= 0) {
+                System.out.print(String.format("Recognized '%c' (%d) at %.4fs\n", (char)sym, sym, t));
+            }
+        }
 
         System.out.print("Done.\n");
     }
@@ -128,7 +130,7 @@ public class Main {
                 j += sym1SS.size();
             }
         }
-        System.out.println("done!"); // 8 4 5 6 12 6 12 6 15 6 0 2 7 7 15 6 2 7 12 6 4 6 1 2
+        System.out.println("done!");
 
         return series;
     }
