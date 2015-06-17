@@ -86,6 +86,29 @@ public class CodeLibrary {
     }
 
     public static CodeLibrary makeChirpCodes() {
+        CodeLibrary l = new CodeLibrary();
+
+        l.codeSamples[0] = makeChirpCode(3, new int[] {0, 2, 20, 28, 14, 1, 1, 27, 23, 17, 0, 2, 37, 19, 13});
+        l.codeSamples[1] = makeChirpCode(2, new int[] {0, 2, 5, 0, 19, 1, 2, 32, 10, 15});
+        l.codeSamples[2] = makeChirpCode(2, new int[] {1, 1, 18, 16, 10, 0, 1, 22, 0, 16});
+        l.codeSamples[3] = makeChirpCode(3, new int[] {1, 1, 5, 10, 11, 0, 1, 13, 33, 12, 0, 1, 3, 19, 11});
+        l.codeSamples[4] = makeChirpCode(3, new int[] {1, 1, 14, 23, 16, 1, 2, 22, 20, 10, 1, 1, 24, 19, 14});
+        l.codeSamples[5] = makeChirpCode(2, new int[] {0, 1, 23, 15, 12, 1, 2, 4, 5, 14});
+        l.codeSamples[6] = makeChirpCode(2, new int[] {1, 1, 0, 18, 18, 1, 1, 13, 17, 15});
+        l.codeSamples[7] = makeChirpCode(2, new int[] {0, 2, 23, 46, 17, 1, 1, 7, 14, 15});
+        l.codeSamples[8] = makeChirpCode(2, new int[] {0, 1, 3, 3, 17, 0, 1, 7, 17, 14});
+        l.codeSamples[9] = makeChirpCode(2, new int[] {0, 2, 9, 11, 10, 0, 1, 9, 33, 19});
+        l.codeSamples[10] = makeChirpCode(2, new int[] {0, 1, 37, 24, 12, 1, 2, 47, 23, 19});
+        l.codeSamples[11] = makeChirpCode(2, new int[] {0, 2, 6, 14, 17, 1, 1, 8, 8, 18});
+        l.codeSamples[12] = makeChirpCode(3, new int[] {1, 1, 10, 12, 13, 1, 2, 22, 18, 16, 0, 1, 23, 17, 13});
+        l.codeSamples[13] = makeChirpCode(3, new int[] {0, 1, 20, 25, 15, 0, 2, 15, 32, 12, 1, 2, 24, 42, 17});
+        l.codeSamples[14] = makeChirpCode(2, new int[] {0, 2, 24, 47, 16, 0, 1, 8, 1, 19});
+        l.codeSamples[15] = makeChirpCode(2, new int[] {1, 1, 12, 7, 12, 1, 1, 5, 8, 16});
+
+        return l;
+    }
+
+    public static CodeLibrary generateAndOptimizeChirpCodes() {
         Random r = new Random(4);
         Vector<CodeEntry> entries = new Vector<CodeEntry>();
 
@@ -132,6 +155,15 @@ public class CodeLibrary {
 
         CodeLibrary l = new CodeLibrary();
         for(int i = 0; i < NUM_SYMBOLS; ++i) {
+            CodeEntry e = entries.get(i);
+            StringBuilder sb = new StringBuilder();
+            for(int j = 0; j < e.params.length; ++j) {
+                if(j > 0) {
+                    sb.append(", ");
+                }
+                sb.append(e.params[j]);
+            }
+            System.out.println(String.format("l.codeSamples[%d] = makeChirpCode(%d, new int[] {%s});", i, e.componentCount, sb.toString()));
             l.codeSamples[i] = entries.get(i).code;
         }
 
@@ -155,8 +187,8 @@ public class CodeLibrary {
             for (int i = 0; i < componentCount; ++i) {
                 params[i * 5 + 0] = r.nextInt(2); // style
                 params[i * 5 + 1] = 1 + r.nextInt(2); // repeat
-                params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW * 3 / 4); // freqA
-                params[i * 5 + 3] = params[i * 5 + 2] + r.nextInt(FrequencyTransformer.BINS_PER_ROW * 1 / 4); // freqB
+                params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW * 1 / 2); // freqA
+                params[i * 5 + 3] = params[i * 5 + 2] + r.nextInt(FrequencyTransformer.BINS_PER_ROW * 1 / 2); // freqB
                 /*
                 params[i * 5 + 2] = r.nextInt(FrequencyTransformer.BINS_PER_ROW - 10) + 2; // freqA
                 params[i * 5 + 3] = params[i * 5 + 3] + 4 + r.nextInt(4); // freqB
@@ -166,7 +198,7 @@ public class CodeLibrary {
                     params[i * 5 + 2] = params[i * 5 + 3];
                     params[i * 5 + 3] = t;
                 }
-                params[i * 5 + 4] = 14 * 3 / componentCount + r.nextInt(10 * 3 / componentCount); // dur
+                params[i * 5 + 4] = 10 + r.nextInt(10); // dur
             }
             code = makeChirpCode(componentCount, params);
             fp = new CodeRecognizer.CodeFingerprint(code);

@@ -53,7 +53,7 @@ public class Main {
         CodeRecognizer cr = new CodeRecognizer(l);
 
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            printFingerprint(cr, i);
+            //printFingerprint(cr, i);
         }
 
         /*
@@ -76,6 +76,7 @@ public class Main {
         */
 
 
+
         System.out.println("Match quality");
         System.out.print("   ");
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
@@ -94,13 +95,14 @@ public class Main {
         }
 
 
+
         System.out.print("Encoding string\n");
 
         SampleSeries hw = encodeString(l, "Hello world!");
         hw.writeToFile("helloworld.wav");
 
         System.out.print("Recognizing!\n");
-        cr.process(hw);//SampleSeries.readFromFile("helloworld-challenge.wav"));
+        cr.process(SampleSeries.readFromFile("helloworld-challenge.wav"));
         while(cr.hasNextSymbol()) {
             int sym = cr.nextSymbol();
             float t = cr.getLastSymbolTime();

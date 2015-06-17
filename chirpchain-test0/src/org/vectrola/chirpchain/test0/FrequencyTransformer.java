@@ -11,10 +11,10 @@ public class FrequencyTransformer {
     public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
     public static final float MIN_FREQUENCY = 1000f;
     public static final float MAX_FREQUENCY = 6000f;
-    public static final float BIN_BANDWIDTH = 100f;
+    public static final float BIN_BANDWIDTH = 50f;
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / BIN_BANDWIDTH) + 1;
     public static final int TOTAL_ROWS = (int) Math.ceil(TIME_WINDOW / ROW_TIME);
-    public static final float WAVELET_WINDOW = ROW_TIME * 2f;
+    public static final float WAVELET_WINDOW = ROW_TIME * 2;
     public static final int WAVELET_WINDOW_SAMPLES = (int)Math.ceil(WAVELET_WINDOW * SampleSeries.SAMPLE_RATE);
     public static final float[] BIN_FREQUENCIES = makeBinFrequencies(BINS_PER_ROW, MIN_FREQUENCY, MAX_FREQUENCY);
 
@@ -150,7 +150,7 @@ public class FrequencyTransformer {
     }
 
     private void flushConsumedSamples() {
-        while(true) {
+        while(!sampleBuffer.isEmpty()) {
             SampleSeries firstSeries = sampleBuffer.get(0);
             if (consumedSamples < firstSeries.size()) {
                 break;

@@ -135,24 +135,31 @@ public class CodeRecognizer {
         public static void findPeaksFingerprint(float[] fingerprint, float[] peaks) {
             int rows = fingerprint.length / FrequencyTransformer.BINS_PER_ROW;
             float ex = mean(fingerprint);
-            float lastF = 0f;
             for (int j = 0; j < rows; ++j) {
                 int rowOffset = j * FrequencyTransformer.BINS_PER_ROW;
-                float fTot = 0f, sigTot = 0f;
+                float fTot = 0f, fVarTot = 0f, sigTot = 0f;
                 float mx = max(fingerprint, rowOffset, FrequencyTransformer.BINS_PER_ROW);
                 float baseline = (mx * 0.5f + ex * 0.5f);
+                float f = 0f, fVar = 0f;
                 for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
                     float sig = Math.max(fingerprint[rowOffset + i] - baseline, 0f);
                     sigTot += sig;
                     fTot += sig * FrequencyTransformer.BIN_FREQUENCIES[i];
                 }
-                float f = sigTot > 0f ? fTot / sigTot : 0f;
-                if ((lastF == 0f) || (Math.abs(f - lastF) < FrequencyTransformer.BIN_BANDWIDTH * 1.5f)) {
+                if(sigTot > 0f) {
+                    f = fTot / sigTot;
+                    for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                        float sig = Math.max(fingerprint[rowOffset + i] - baseline, 0f);
+                        float thisFv = sig * (FrequencyTransformer.BIN_FREQUENCIES[i] - f);
+                        fVarTot += thisFv * thisFv;
+                    }
+                    fVar = (float) Math.sqrt(fVarTot) / sigTot;
+                }
+                if (fVar < FrequencyTransformer.BIN_BANDWIDTH * 1.5f) {
                     peaks[j] = f;
                 } else {
                     peaks[j] = 0f;
                 }
-                lastF = f;
             }
         }
 
@@ -225,10 +232,18 @@ public class CodeRecognizer {
     public static float matchQuality(float[] codePeaks, float[] inputPeaks) {
         float q = 0;
         int samples = 0;
-        for (int i = 0; i < Math.min(codePeaks.length, inputPeaks.length); ++i) {
+        for (int i = 1; i < Math.min(codePeaks.length - 1, inputPeaks.length); ++i) {
             if (codePeaks[i] > 0f) {
                 float diff = Math.abs(inputPeaks[i] - codePeaks[i]) / FrequencyTransformer.BIN_BANDWIDTH;
-                float thisQ = Math.min(Math.max(1f - (diff - 1.5f), 0f), 1f);
+                float margin = 0;
+                if(codePeaks[i - 1] > 0) {
+                    margin = Math.abs(codePeaks[i - 1] - codePeaks[i]);
+                }
+                if(codePeaks[i + 1] > 0) {
+                    margin = Math.max(Math.abs(codePeaks[i + 1] - codePeaks[i]), margin);
+                }
+                margin /= FrequencyTransformer.BIN_BANDWIDTH;
+                float thisQ = Math.min(Math.max(1f - (diff - margin - 0.6f), 0f), 1f);
                 q += thisQ * thisQ;
                 ++samples;
             }
