@@ -50,7 +50,7 @@ public class Main {
 
         System.out.print("Fingerprinting library\n");
 
-        CodeRecognizer cr = new CodeRecognizer(l);
+        PeakListRecognizer cr = new PeakListRecognizer(l);
 
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             //printFingerprint(cr, i);
@@ -86,9 +86,9 @@ public class Main {
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             System.out.print(String.format("%2d:", i));
             float[] inputPeaks = new float[cr.getFingerprintForSymbol(i).getMatchRows()];
-            CodeRecognizer.CodeFingerprint.findPeaksInput(cr.getFingerprintForSymbol(i).getBins(), inputPeaks);
+            PeakListRecognizer.findPeaksInput(((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(i)).getBins(), inputPeaks);
             for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
-                float q = CodeRecognizer.matchQuality(cr.getFingerprintForSymbol(j).getPeaks(), inputPeaks);
+                float q = PeakListRecognizer.matchQuality(((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(j)).getPeaks(), inputPeaks);
                 System.out.print(String.format("  %5.2f", q));
             }
             System.out.println();
@@ -116,8 +116,8 @@ public class Main {
 
     private static void printFingerprint(CodeRecognizer cr, int symbol) {
         char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
-        float[] fp = cr.getFingerprintForSymbol(symbol).getBins();
-        float[] pk = cr.getFingerprintForSymbol(symbol).getPeaks();
+        float[] fp = ((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(symbol)).getBins();
+        float[] pk = ((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(symbol)).getPeaks();
         System.out.println(String.format("Fingerprint for symbol %d:", symbol));
         for(int j = 0; j < fp.length / FrequencyTransformer.BINS_PER_ROW; ++j) {
             System.out.print('|');

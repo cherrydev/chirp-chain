@@ -10,19 +10,26 @@ public class CodeLibrary {
     public static int NUM_SYMBOLS = 16;
 
     private SampleSeries[] codeSamples = new SampleSeries[NUM_SYMBOLS];
+    private float maxCodeLength = -1f;
 
     public SampleSeries getCodeForSymbol(int symbol) {
         return codeSamples[symbol];
     }
 
-    public float getMaxCodeLength() {
-        float max = 0f;
+    public int maxCodeRows() {
+        return (int) Math.ceil(getMaxCodeLength() / FrequencyTransformer.ROW_TIME);
+    }
 
-        for (int i = 0; i < NUM_SYMBOLS; ++i) {
-            max = Math.max(max, (float) codeSamples[i].size() / SampleSeries.SAMPLE_RATE);
+    public float getMaxCodeLength() {
+        if(maxCodeLength < 0) {
+            maxCodeLength = 0f;
+
+            for (int i = 0; i < NUM_SYMBOLS; ++i) {
+                maxCodeLength = Math.max(maxCodeLength, (float) codeSamples[i].size() / SampleSeries.SAMPLE_RATE);
+            }
         }
 
-        return max;
+        return maxCodeLength;
     }
 
     private static float[] computeNewEntryCrossMatch(Vector<CodeEntry> entries, CodeEntry e) {
@@ -174,7 +181,7 @@ public class CodeLibrary {
         public int componentCount;
         public int[] params;
         public SampleSeries code;
-        public CodeRecognizer.CodeFingerprint fp;
+        public PeakListRecognizer.PeakListFingerprint fp;
         float[] inputPeaks;
         public float highestQ;
         public float totalQ;
@@ -201,9 +208,9 @@ public class CodeLibrary {
                 params[i * 5 + 4] = 10 + r.nextInt(10); // dur
             }
             code = makeChirpCode(componentCount, params);
-            fp = new CodeRecognizer.CodeFingerprint(code);
+            fp = new PeakListRecognizer.PeakListFingerprint(code);
             inputPeaks = new float[fp.getMatchRows()];
-            CodeRecognizer.CodeFingerprint.findPeaksInput(fp.getBins(), inputPeaks);
+            PeakListRecognizer.findPeaksInput(fp.getBins(), inputPeaks);
         }
 
         private float getSelfMatchQ() {
@@ -213,14 +220,14 @@ public class CodeLibrary {
             float[] offsetInputBins = new float[ft.availableRows() * FrequencyTransformer.BINS_PER_ROW];
             float[] offsetInputPeaks = new float[ft.availableRows()];
             ft.getBinRows(offsetInputBins, ft.availableRows());
-            CodeRecognizer.CodeFingerprint.findPeaksInput(offsetInputBins, offsetInputPeaks);
-            return CodeRecognizer.matchQuality(fp.peaks, inputPeaks) *
-                    CodeRecognizer.matchQuality(fp.peaks, offsetInputPeaks);
+            PeakListRecognizer.findPeaksInput(offsetInputBins, offsetInputPeaks);
+            return PeakListRecognizer.matchQuality(fp.getPeaks(), inputPeaks) *
+                    PeakListRecognizer.matchQuality(fp.getPeaks(), offsetInputPeaks);
         }
 
         private float getCodeMatchQ(CodeEntry other) {
-            return Math.max(slidingMatchQ(fp.peaks, other.inputPeaks),
-                    slidingMatchQ(other.fp.peaks, inputPeaks));
+            return Math.max(slidingMatchQ(fp.getPeaks(), other.inputPeaks),
+                    slidingMatchQ(other.fp.getPeaks(), inputPeaks));
         }
 
         private static float slidingMatchQ(float[] peaksA, float[] peaksB) {
@@ -256,7 +263,7 @@ public class CodeLibrary {
                     testBed[j] = 0f;
                 }
 
-                bestQ = Math.max(CodeRecognizer.matchQuality(testBed, peaksB), bestQ);
+                bestQ = Math.max(PeakListRecognizer.matchQuality(testBed, peaksB), bestQ);
             }
             return bestQ;
         }
