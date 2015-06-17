@@ -4,8 +4,8 @@
     <list default="true" id="5820e29a-e2d1-4dcf-8b5c-5c96af9f2d12" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="chirpchain-test0.iws" />
@@ -32,7 +32,7 @@
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="72" column="45" selection-start-line="72" selection-start-column="45" selection-end-line="72" selection-end-column="45" />
+              <caret line="40" column="23" selection-start-line="40" selection-start-column="23" selection-end-line="40" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -41,8 +41,8 @@
       <file leaf-file-name="CodeRecognizer.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="197" column="21" selection-start-line="197" selection-start-column="21" selection-end-line="197" selection-end-column="21" />
+            <state vertical-scroll-proportion="-7.5925927">
+              <caret line="64" column="27" selection-start-line="64" selection-start-column="27" selection-end-line="64" selection-end-column="27" />
               <folding>
                 <element signature="e#875#876#0" expanded="true" />
                 <element signature="e#922#923#0" expanded="true" />
@@ -50,14 +50,14 @@
                 <element signature="e#1027#1028#0" expanded="true" />
                 <element signature="e#1356#1357#0" expanded="true" />
                 <element signature="e#1393#1394#0" expanded="true" />
-                <element signature="e#2869#2870#0" expanded="true" />
-                <element signature="e#2904#2905#0" expanded="true" />
-                <element signature="e#2941#2942#0" expanded="true" />
-                <element signature="e#2977#2978#0" expanded="true" />
-                <element signature="e#3022#3023#0" expanded="true" />
-                <element signature="e#3066#3067#0" expanded="true" />
-                <element signature="e#3103#3104#0" expanded="true" />
-                <element signature="e#3146#3147#0" expanded="true" />
+                <element signature="e#2873#2874#0" expanded="true" />
+                <element signature="e#2908#2909#0" expanded="true" />
+                <element signature="e#2945#2946#0" expanded="true" />
+                <element signature="e#2981#2982#0" expanded="true" />
+                <element signature="e#3026#3027#0" expanded="true" />
+                <element signature="e#3070#3071#0" expanded="true" />
+                <element signature="e#3107#3108#0" expanded="true" />
+                <element signature="e#3150#3151#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -67,7 +67,7 @@
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="33" column="30" selection-start-line="33" selection-start-column="30" selection-end-line="33" selection-end-column="30" />
+              <caret line="56" column="64" selection-start-line="56" selection-start-column="64" selection-end-line="56" selection-end-column="64" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#393#394#0" expanded="true" />
@@ -81,30 +81,28 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CodeLibrary.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="CodeLibrary.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.7678019">
-              <caret line="51" column="17" selection-start-line="51" selection-start-column="17" selection-end-line="51" selection-end-column="17" />
+            <state vertical-scroll-proportion="-4.814815">
+              <caret line="187" column="0" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#740#751#0" expanded="true" />
-                <element signature="e#4448#4449#0" expanded="true" />
-                <element signature="e#4526#4527#0" expanded="true" />
-                <element signature="e#5946#5947#0" expanded="true" />
-                <element signature="e#5979#5980#0" expanded="true" />
+                <element signature="e#2527#2538#0" expanded="true" />
+                <element signature="e#9501#9502#0" expanded="true" />
+                <element signature="e#9534#9535#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FrequencyTransformer.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="FrequencyTransformer.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="78" column="14" selection-start-line="78" selection-start-column="14" selection-end-line="78" selection-end-column="14" />
+            <state vertical-scroll-proportion="0.10025707">
+              <caret line="29" column="35" selection-start-line="29" selection-start-column="35" selection-end-line="29" selection-end-column="35" />
               <folding>
-                <element signature="e#1435#1449#0" expanded="true" />
+                <element signature="e#1436#1450#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -137,10 +135,10 @@
       <list>
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransform.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/AdsrEnvelope.java" />
-        <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" />
+        <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" />
       </list>
     </option>
@@ -450,7 +448,19 @@
       <option name="project" value="LOCAL" />
       <updated>1434434625697</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="First attempt at randomly generating the library.">
+      <created>1434442873885</created>
+      <option name="number" value="00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1434442873885</updated>
+    </task>
+    <task id="LOCAL-00005" summary="More fiddling with random generation. Now it trends to better recognition.">
+      <created>1434487166004</created>
+      <option name="number" value="00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1434487166004</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -474,7 +484,7 @@
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3297546" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2688588" sideWeight="0.4969325" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.1934236" sideWeight="0.4969325" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -497,11 +507,21 @@
     <MESSAGE value="Chirps actually sound decent?" />
     <MESSAGE value="First implementation of recognizer, using covariance measure. Not reliable yet." />
     <MESSAGE value="Peak frequency recognition algorithm. Much more reliable. Needs better design of chirps to improve discrimination." />
-    <option name="LAST_COMMIT_MESSAGE" value="Peak frequency recognition algorithm. Much more reliable. Needs better design of chirps to improve discrimination." />
+    <MESSAGE value="First attempt at randomly generating the library." />
+    <MESSAGE value="More fiddling with random generation. Now it trends to better recognition." />
+    <option name="LAST_COMMIT_MESSAGE" value="More fiddling with random generation. Now it trends to better recognition." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="16" />
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java</url>
+          <line>98</line>
+          <properties />
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="28" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -529,14 +549,14 @@
             <element signature="e#1027#1028#0" expanded="true" />
             <element signature="e#1356#1357#0" expanded="true" />
             <element signature="e#1393#1394#0" expanded="true" />
-            <element signature="e#2869#2870#0" expanded="true" />
-            <element signature="e#2904#2905#0" expanded="true" />
-            <element signature="e#2941#2942#0" expanded="true" />
-            <element signature="e#2977#2978#0" expanded="true" />
-            <element signature="e#3022#3023#0" expanded="true" />
-            <element signature="e#3066#3067#0" expanded="true" />
-            <element signature="e#3103#3104#0" expanded="true" />
-            <element signature="e#3146#3147#0" expanded="true" />
+            <element signature="e#2873#2874#0" expanded="true" />
+            <element signature="e#2908#2909#0" expanded="true" />
+            <element signature="e#2945#2946#0" expanded="true" />
+            <element signature="e#2981#2982#0" expanded="true" />
+            <element signature="e#3026#3027#0" expanded="true" />
+            <element signature="e#3070#3071#0" expanded="true" />
+            <element signature="e#3107#3108#0" expanded="true" />
+            <element signature="e#3150#3151#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -547,11 +567,9 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#740#751#0" expanded="true" />
-            <element signature="e#4448#4449#0" expanded="true" />
-            <element signature="e#4526#4527#0" expanded="true" />
-            <element signature="e#5946#5947#0" expanded="true" />
-            <element signature="e#5979#5980#0" expanded="true" />
+            <element signature="e#2527#2538#0" expanded="true" />
+            <element signature="e#9501#9502#0" expanded="true" />
+            <element signature="e#9534#9535#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -561,7 +579,7 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="32" column="10" selection-start-line="32" selection-start-column="10" selection-end-line="32" selection-end-column="10" />
           <folding>
-            <element signature="e#1435#1449#0" expanded="true" />
+            <element signature="e#1436#1450#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -585,14 +603,14 @@
             <element signature="e#1027#1028#0" expanded="true" />
             <element signature="e#1356#1357#0" expanded="true" />
             <element signature="e#1393#1394#0" expanded="true" />
-            <element signature="e#2869#2870#0" expanded="true" />
-            <element signature="e#2904#2905#0" expanded="true" />
-            <element signature="e#2941#2942#0" expanded="true" />
-            <element signature="e#2977#2978#0" expanded="true" />
-            <element signature="e#3022#3023#0" expanded="true" />
-            <element signature="e#3066#3067#0" expanded="true" />
-            <element signature="e#3103#3104#0" expanded="true" />
-            <element signature="e#3146#3147#0" expanded="true" />
+            <element signature="e#2873#2874#0" expanded="true" />
+            <element signature="e#2908#2909#0" expanded="true" />
+            <element signature="e#2945#2946#0" expanded="true" />
+            <element signature="e#2981#2982#0" expanded="true" />
+            <element signature="e#3026#3027#0" expanded="true" />
+            <element signature="e#3070#3071#0" expanded="true" />
+            <element signature="e#3107#3108#0" expanded="true" />
+            <element signature="e#3150#3151#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -603,11 +621,9 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#740#751#0" expanded="true" />
-            <element signature="e#4448#4449#0" expanded="true" />
-            <element signature="e#4526#4527#0" expanded="true" />
-            <element signature="e#5946#5947#0" expanded="true" />
-            <element signature="e#5979#5980#0" expanded="true" />
+            <element signature="e#2527#2538#0" expanded="true" />
+            <element signature="e#9501#9502#0" expanded="true" />
+            <element signature="e#9534#9535#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -617,7 +633,7 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="32" column="10" selection-start-line="32" selection-start-column="10" selection-end-line="32" selection-end-column="10" />
           <folding>
-            <element signature="e#1435#1449#0" expanded="true" />
+            <element signature="e#1436#1450#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -665,10 +681,41 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.5925927">
+          <caret line="64" column="27" selection-start-line="64" selection-start-column="27" selection-end-line="64" selection-end-column="27" />
+          <folding>
+            <element signature="e#875#876#0" expanded="true" />
+            <element signature="e#922#923#0" expanded="true" />
+            <element signature="e#971#972#0" expanded="true" />
+            <element signature="e#1027#1028#0" expanded="true" />
+            <element signature="e#1356#1357#0" expanded="true" />
+            <element signature="e#1393#1394#0" expanded="true" />
+            <element signature="e#2873#2874#0" expanded="true" />
+            <element signature="e#2908#2909#0" expanded="true" />
+            <element signature="e#2945#2946#0" expanded="true" />
+            <element signature="e#2981#2982#0" expanded="true" />
+            <element signature="e#3026#3027#0" expanded="true" />
+            <element signature="e#3070#3071#0" expanded="true" />
+            <element signature="e#3107#3108#0" expanded="true" />
+            <element signature="e#3150#3151#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="40" column="23" selection-start-line="40" selection-start-column="23" selection-end-line="40" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="33" column="30" selection-start-line="33" selection-start-column="30" selection-end-line="33" selection-end-column="30" />
+          <caret line="56" column="64" selection-start-line="56" selection-start-column="64" selection-end-line="56" selection-end-column="64" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#393#394#0" expanded="true" />
@@ -681,58 +728,25 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="78" column="14" selection-start-line="78" selection-start-column="14" selection-end-line="78" selection-end-column="14" />
-          <folding>
-            <element signature="e#1435#1449#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="197" column="21" selection-start-line="197" selection-start-column="21" selection-end-line="197" selection-end-column="21" />
-          <folding>
-            <element signature="e#875#876#0" expanded="true" />
-            <element signature="e#922#923#0" expanded="true" />
-            <element signature="e#971#972#0" expanded="true" />
-            <element signature="e#1027#1028#0" expanded="true" />
-            <element signature="e#1356#1357#0" expanded="true" />
-            <element signature="e#1393#1394#0" expanded="true" />
-            <element signature="e#2869#2870#0" expanded="true" />
-            <element signature="e#2904#2905#0" expanded="true" />
-            <element signature="e#2941#2942#0" expanded="true" />
-            <element signature="e#2977#2978#0" expanded="true" />
-            <element signature="e#3022#3023#0" expanded="true" />
-            <element signature="e#3066#3067#0" expanded="true" />
-            <element signature="e#3103#3104#0" expanded="true" />
-            <element signature="e#3146#3147#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="72" column="45" selection-start-line="72" selection-start-column="45" selection-end-line="72" selection-end-column="45" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7678019">
-          <caret line="51" column="17" selection-start-line="51" selection-start-column="17" selection-end-line="51" selection-end-column="17" />
+        <state vertical-scroll-proportion="-4.814815">
+          <caret line="187" column="0" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#740#751#0" expanded="true" />
-            <element signature="e#4448#4449#0" expanded="true" />
-            <element signature="e#4526#4527#0" expanded="true" />
-            <element signature="e#5946#5947#0" expanded="true" />
-            <element signature="e#5979#5980#0" expanded="true" />
+            <element signature="e#2527#2538#0" expanded="true" />
+            <element signature="e#9501#9502#0" expanded="true" />
+            <element signature="e#9534#9535#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.10025707">
+          <caret line="29" column="35" selection-start-line="29" selection-start-column="35" selection-end-line="29" selection-end-column="35" />
+          <folding>
+            <element signature="e#1436#1450#0" expanded="true" />
           </folding>
         </state>
       </provider>

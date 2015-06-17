@@ -7,7 +7,7 @@ import java.util.Vector;
  */
 public class FrequencyTransformer {
     public static final float TIME_WINDOW = 1f;
-    public static final float ROW_TIME = 0.01f;
+    public static final float ROW_TIME = 0.010f;
     public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
     public static final float MIN_FREQUENCY = 1000f;
     public static final float MAX_FREQUENCY = 6000f;
@@ -97,7 +97,7 @@ public class FrequencyTransformer {
         }
         else {
             System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, 0, (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW);
-            System.arraycopy(bins, 0, dest, (TOTAL_ROWS - firstBinRow), (firstBinRow + numRows - TOTAL_ROWS) * BINS_PER_ROW);
+            System.arraycopy(bins, 0, dest, (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW, (firstBinRow + numRows - TOTAL_ROWS) * BINS_PER_ROW);
         }
     }
 

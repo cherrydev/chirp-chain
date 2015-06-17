@@ -62,7 +62,7 @@ public class CodeRecognizer {
                 nextSymbol = matchSym;
                 lastSymbolTime = time;
                 time += codeRows * FrequencyTransformer.ROW_TIME;
-                frequencyTransformer.discardRows(codeRows);
+                frequencyTransformer.discardRows(codeRows - 1);
             }
             else {
                 ++rowsSinceSymbolDetected;
@@ -118,19 +118,13 @@ public class CodeRecognizer {
             }
 
             peaks = new float[fingerprintRows];
-            peakStrengths = new float[fingerprintRows];
-            findPeaks(bins, peaks, peakStrengths);
-            for(int i = 0; i < fingerprintRows; ++i) {
-                if(peakStrengths[i] < 0.1f) {
-                    peaks[i] = 0f;
-                }
-            }
+            findPeaksFingerprint(bins, peaks);
         }
 
         public static CodeFingerprint[] fingerprintLibrary(CodeLibrary library) {
             CodeFingerprint[] fingerprints = new CodeFingerprint[CodeLibrary.NUM_SYMBOLS];
 
-            for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
                 SampleSeries code = library.getCodeForSymbol(i);
                 fingerprints[i] = new CodeFingerprint(code);
             }
@@ -138,19 +132,50 @@ public class CodeRecognizer {
             return fingerprints;
         }
 
-        public static void findPeaks(float[] fingerprint, float[] peaks, float[] peakStrengths) {
+        public static void findPeaksFingerprint(float[] fingerprint, float[] peaks) {
             int rows = fingerprint.length / FrequencyTransformer.BINS_PER_ROW;
-            for(int j = 0; j < rows; ++j) {
+            float ex = mean(fingerprint);
+            float lastF = 0f;
+            for (int j = 0; j < rows; ++j) {
+                int rowOffset = j * FrequencyTransformer.BINS_PER_ROW;
+                float fTot = 0f, sigTot = 0f;
+                float mx = max(fingerprint, rowOffset, FrequencyTransformer.BINS_PER_ROW);
+                float baseline = (mx * 0.5f + ex * 0.5f);
+                for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    float sig = Math.max(fingerprint[rowOffset + i] - baseline, 0f);
+                    sigTot += sig;
+                    fTot += sig * FrequencyTransformer.BIN_FREQUENCIES[i];
+                }
+                float f = sigTot > 0f ? fTot / sigTot : 0f;
+                if ((lastF == 0f) || (Math.abs(f - lastF) < FrequencyTransformer.BIN_BANDWIDTH * 1.5f)) {
+                    peaks[j] = f;
+                } else {
+                    peaks[j] = 0f;
+                }
+                lastF = f;
+            }
+        }
+
+        public static void findPeaksInput(float[] input, float[] peaks) {
+            int rows = input.length / FrequencyTransformer.BINS_PER_ROW;
+            for (int j = 0; j < rows; ++j) {
                 int rowOffset = j * FrequencyTransformer.BINS_PER_ROW;
                 int peak = 0;
-                for(int i = 1; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                    if(fingerprint[rowOffset + i] > fingerprint[rowOffset + peak]) {
+                for(int i= 1; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    if(input[rowOffset + i] > input[rowOffset + peak]) {
                         peak = i;
                     }
                 }
                 peaks[j] = FrequencyTransformer.BIN_FREQUENCIES[peak];
-                peakStrengths[j] = fingerprint[rowOffset + peak];
             }
+        }
+
+        private static float max(float[] values, int offset, int length) {
+            float maxValue = values[0];
+            for (int i = offset; i < offset + length; ++i) {
+                maxValue = Math.max(maxValue, values[i]);
+            }
+            return maxValue;
         }
     }
 
@@ -159,17 +184,15 @@ public class CodeRecognizer {
         FrequencyTransformer frequencyTransformer;
         float[] inputFingerprint;
         float[] inputPeaks;
-        float[] inputPeakStrengths;
 
         public FingerprintMatcher(CodeRecognizer cr) {
             this.codeFingerprints = cr.codeFingerprints;
             this.frequencyTransformer = cr.frequencyTransformer;
             this.inputFingerprint = new float[cr.maxCodeRows * FrequencyTransformer.BINS_PER_ROW];
             this.inputPeaks = new float[cr.maxCodeRows];
-            this.inputPeakStrengths = new float[cr.maxCodeRows];
 
             frequencyTransformer.getBinRows(this.inputFingerprint, cr.maxCodeRows);
-            CodeFingerprint.findPeaks(inputFingerprint, inputPeaks, inputPeakStrengths);
+            CodeFingerprint.findPeaksInput(inputFingerprint, inputPeaks);
         }
 
         public static boolean canMatch(CodeRecognizer cr) {
@@ -190,7 +213,7 @@ public class CodeRecognizer {
                 }
             }
 
-            if(bestQ > 0.7f && secondQ < 0.5f) {
+            if((bestQ > 0.5f) && ((secondQ / bestQ) < 0.7f)) {
                 return bestSym;
             }
             else {
@@ -200,20 +223,20 @@ public class CodeRecognizer {
     }
 
     public static float matchQuality(float[] codePeaks, float[] inputPeaks) {
-        int hits = 0, misses = 0;
+        float q = 0;
+        int samples = 0;
         for (int i = 0; i < Math.min(codePeaks.length, inputPeaks.length); ++i) {
             if (codePeaks[i] > 0f) {
-                if (Math.abs(inputPeaks[i] - codePeaks[i]) < FrequencyTransformer.BIN_BANDWIDTH * 2.5f) {
-                    ++hits;
-                } else {
-                    ++misses;
-                }
+                float diff = Math.abs(inputPeaks[i] - codePeaks[i]) / FrequencyTransformer.BIN_BANDWIDTH;
+                float thisQ = Math.min(Math.max(1f - (diff - 1.5f), 0f), 1f);
+                q += thisQ * thisQ;
+                ++samples;
             }
         }
-        if (hits + misses == 0) {
+        if (samples == 0) {
             return 0f;
         } else {
-            return (float) hits / (float) (hits + misses);
+            return q / (float) samples;
         }
     }
 
