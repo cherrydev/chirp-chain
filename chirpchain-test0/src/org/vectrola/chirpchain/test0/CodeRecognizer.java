@@ -11,7 +11,12 @@ public class CodeRecognizer {
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
         protected SampleSeries code;
+        protected float[] bins;
         private int matchRows;
+
+        public float[] getBins() {
+            return bins;
+        }
 
         public int getMatchRows() {
             return matchRows;
@@ -20,6 +25,18 @@ public class CodeRecognizer {
         public CodeFingerprint(SampleSeries code) {
             this.code = code;
             this.matchRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
+
+            int fingerprintRows;
+
+            synchronized (ft) {
+                ft.flush();
+                ft.addSamples(code);
+                ft.addSamples(pad);
+
+                bins = new float[matchRows * FrequencyTransformer.BINS_PER_ROW];
+                ft.getBinRows(bins, matchRows);
+            }
+
         }
     }
 
@@ -35,6 +52,7 @@ public class CodeRecognizer {
 
     public CodeRecognizer(CodeLibrary library) {
         this.library = library;
+        this.codeFingerprints = new CodeFingerprint[CodeLibrary.NUM_SYMBOLS];
     }
 
     public CodeFingerprint getFingerprintForSymbol(int symbol)
@@ -76,7 +94,7 @@ public class CodeRecognizer {
                 nextSymbol = matchSym;
                 lastSymbolTime = time;
                 time += codeRows * FrequencyTransformer.ROW_TIME;
-                frequencyTransformer.discardRows(codeRows - 1);
+                frequencyTransformer.discardRows(codeRows - 2);
             }
             else {
                 ++rowsSinceSymbolDetected;

@@ -1,5 +1,6 @@
 package org.vectrola.chirpchain.test0;
 
+import java.security.InvalidParameterException;
 import java.util.Vector;
 
 /**
@@ -91,7 +92,9 @@ public class FrequencyTransformer {
 
     public void getBinRows(float[] dest, int numRows)
     {
-        assert numRows <= availableRows();
+        if(numRows > availableRows()) {
+            throw new InvalidParameterException("numRows exceeds availableRows()");
+        }
         if(firstBinRow + numRows <= TOTAL_ROWS) {
             System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, 0, numRows * BINS_PER_ROW);
         }
@@ -102,7 +105,9 @@ public class FrequencyTransformer {
     }
 
     public void discardRows(int numRows) {
-        assert numRows < availableRows();
+        if(numRows > availableRows()) {
+            throw new InvalidParameterException("numRows exceeds availableRows()");
+        }
         firstBinRow = (firstBinRow + numRows) % TOTAL_ROWS;
         tryConsumeSamples();
     }

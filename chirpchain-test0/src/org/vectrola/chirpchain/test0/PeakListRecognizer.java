@@ -8,44 +8,22 @@ public class PeakListRecognizer extends CodeRecognizer {
         protected static final FrequencyTransformer ft = new FrequencyTransformer();
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
-        private float[] bins;
         private float[] peaks;
-
-        public float[] getBins() {
-            return bins;
-        }
 
         public float[] getPeaks() {
             return peaks;
         }
 
-        public int getMatchRows() {
-            return peaks.length;
-        }
-
         protected PeakListFingerprint(SampleSeries code) {
             super(code);
 
-            int fingerprintRows;
-
-            synchronized (ft) {
-                ft.flush();
-                ft.addSamples(code);
-                ft.addSamples(pad);
-
-                fingerprintRows = ft.availableRows();
-                bins = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
-                ft.getBinRows(bins, fingerprintRows);
-            }
-
-            peaks = new float[fingerprintRows];
+            peaks = new float[getMatchRows()];
             findPeaksFingerprint(bins, peaks);
         }
     }
 
     PeakListRecognizer(CodeLibrary library) {
         super(library);
-        this.codeFingerprints = new CodeFingerprint[CodeLibrary.NUM_SYMBOLS];
         fingerprintLibrary();
     }
 
@@ -153,7 +131,7 @@ public class PeakListRecognizer extends CodeRecognizer {
         }
     }
 
-    private static float max(float[] values, int offset, int length) {
+    public static float max(float[] values, int offset, int length) {
         float maxValue = values[0];
         for (int i = offset; i < offset + length; ++i) {
             maxValue = Math.max(maxValue, values[i]);
