@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5820e29a-e2d1-4dcf-8b5c-5c96af9f2d12" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/BinPatternRecognizer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/BinPatternRecognizer.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/PeakListRecognizer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/PeakListRecognizer.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java" afterPath="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="chirpchain-test0.iws" />
@@ -33,8 +29,8 @@
       <file leaf-file-name="Main.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-1.6666666">
-              <caret line="141" column="68" selection-start-line="141" selection-start-column="68" selection-end-line="141" selection-end-column="68" />
+            <state vertical-scroll-proportion="-7.7777777">
+              <caret line="164" column="26" selection-start-line="164" selection-start-column="26" selection-end-line="164" selection-end-column="26" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#7898#7899#0" expanded="true" />
@@ -48,66 +44,28 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CodeRecognizer.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="26.25926">
-              <caret line="55" column="11" selection-start-line="55" selection-start-column="11" selection-end-line="55" selection-end-column="11" />
-              <folding>
-                <element signature="e#483#484#0" expanded="true" />
-                <element signature="e#518#519#0" expanded="true" />
-                <element signature="e#555#556#0" expanded="true" />
-                <element signature="e#595#596#0" expanded="true" />
-                <element signature="e#1653#1654#0" expanded="true" />
-                <element signature="e#1700#1701#0" expanded="true" />
-                <element signature="e#1749#1750#0" expanded="true" />
-                <element signature="e#1805#1806#0" expanded="true" />
-                <element signature="e#2134#2135#0" expanded="true" />
-                <element signature="e#2171#2172#0" expanded="true" />
-                <element signature="e#3221#3222#0" expanded="true" />
-                <element signature="e#3305#3306#0" expanded="true" />
-                <element signature="e#3341#3342#0" expanded="true" />
-                <element signature="e#3366#3367#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PeakListRecognizer.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/PeakListRecognizer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="6" column="59" selection-start-line="6" selection-start-column="59" selection-end-line="6" selection-end-column="59" />
-              <folding>
-                <element signature="e#477#478#0" expanded="true" />
-                <element signature="e#513#514#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="BinPatternRecognizer.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/BinPatternRecognizer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="42" column="45" selection-start-line="42" selection-start-column="45" selection-end-line="42" selection-end-column="45" />
-              <folding>
-                <element signature="e#485#486#0" expanded="true" />
-                <element signature="e#526#527#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="TimeCorrelatingRecognizer.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="TimeCorrelatingRecognizer.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.20289855">
-              <caret line="92" column="1" selection-start-line="92" selection-start-column="1" selection-end-line="92" selection-end-column="1" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="93" column="34" selection-start-line="93" selection-start-column="34" selection-end-line="93" selection-end-column="34" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#571#572#0" expanded="true" />
                 <element signature="e#609#610#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="FrequencyTransformer.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.6956522">
+              <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#1482#1496#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -141,13 +99,13 @@
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransform.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/AdsrEnvelope.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/SampleSeries.java" />
-        <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/PeakListRecognizer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/BinPatternRecognizer.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java" />
         <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java" />
+        <option value="$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java" />
       </list>
     </option>
   </component>
@@ -492,7 +450,13 @@
       <option name="project" value="LOCAL" />
       <updated>1434588830244</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="New recognizer divides patterns into zones and insists that they continue to match over time, so there's a penalty against signals that match great for the first 50% and then not at all for the last 50%. This works WAY better on noisy signals.">
+      <created>1434614669089</created>
+      <option name="number" value="00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1434614669089</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TodoView">
@@ -524,8 +488,8 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3297546" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3409894" sideWeight="0.4969325" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3409894" sideWeight="0.4969325" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -554,7 +518,8 @@
     <MESSAGE value="Matching now reliable on clean messages. Still not all the way with the challenge message. Now there is a static set of chirps." />
     <MESSAGE value="Refactor peak list recognizer into its own class so I can work on the BinPatternRecognizer without trashing and tripping on the old code." />
     <MESSAGE value="BinPatternRecognizer; also fixed issues with codes taking their parameters from the FrequencyTransformer and changing whenever I fiddled with those values." />
-    <option name="LAST_COMMIT_MESSAGE" value="BinPatternRecognizer; also fixed issues with codes taking their parameters from the FrequencyTransformer and changing whenever I fiddled with those values." />
+    <MESSAGE value="New recognizer divides patterns into zones and insists that they continue to match over time, so there's a penalty against signals that match great for the first 50% and then not at all for the last 50%. This works WAY better on noisy signals." />
+    <option name="LAST_COMMIT_MESSAGE" value="New recognizer divides patterns into zones and insists that they continue to match over time, so there's a penalty against signals that match great for the first 50% and then not at all for the last 50%. This works WAY better on noisy signals." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -784,17 +749,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3409091">
-          <caret line="14" column="35" selection-start-line="14" selection-start-column="35" selection-end-line="14" selection-end-column="35" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#1482#1496#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeLibrary.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33144477">
@@ -808,29 +762,6 @@
             <element signature="e#4812#4823#0" expanded="true" />
             <element signature="e#12248#12249#0" expanded="true" />
             <element signature="e#12281#12282#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="26.25926">
-          <caret line="55" column="11" selection-start-line="55" selection-start-column="11" selection-end-line="55" selection-end-column="11" />
-          <folding>
-            <element signature="e#483#484#0" expanded="true" />
-            <element signature="e#518#519#0" expanded="true" />
-            <element signature="e#555#556#0" expanded="true" />
-            <element signature="e#595#596#0" expanded="true" />
-            <element signature="e#1653#1654#0" expanded="true" />
-            <element signature="e#1700#1701#0" expanded="true" />
-            <element signature="e#1749#1750#0" expanded="true" />
-            <element signature="e#1805#1806#0" expanded="true" />
-            <element signature="e#2134#2135#0" expanded="true" />
-            <element signature="e#2171#2172#0" expanded="true" />
-            <element signature="e#3221#3222#0" expanded="true" />
-            <element signature="e#3305#3306#0" expanded="true" />
-            <element signature="e#3341#3342#0" expanded="true" />
-            <element signature="e#3366#3367#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -859,8 +790,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/Main.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.6666666">
-          <caret line="141" column="68" selection-start-line="141" selection-start-column="68" selection-end-line="141" selection-end-column="68" />
+        <state vertical-scroll-proportion="-7.7777777">
+          <caret line="164" column="26" selection-start-line="164" selection-start-column="26" selection-end-line="164" selection-end-column="26" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#7898#7899#0" expanded="true" />
@@ -873,14 +804,48 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/CodeRecognizer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-10.407408">
+          <caret line="87" column="38" selection-start-line="87" selection-start-column="38" selection-end-line="87" selection-end-column="38" />
+          <folding>
+            <element signature="e#483#484#0" expanded="true" />
+            <element signature="e#518#519#0" expanded="true" />
+            <element signature="e#555#556#0" expanded="true" />
+            <element signature="e#595#596#0" expanded="true" />
+            <element signature="e#1653#1654#0" expanded="true" />
+            <element signature="e#1700#1701#0" expanded="true" />
+            <element signature="e#1749#1750#0" expanded="true" />
+            <element signature="e#1805#1806#0" expanded="true" />
+            <element signature="e#2134#2135#0" expanded="true" />
+            <element signature="e#2171#2172#0" expanded="true" />
+            <element signature="e#3221#3222#0" expanded="true" />
+            <element signature="e#3305#3306#0" expanded="true" />
+            <element signature="e#3341#3342#0" expanded="true" />
+            <element signature="e#3366#3367#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/TimeCorrelatingRecognizer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.20289855">
-          <caret line="92" column="1" selection-start-line="92" selection-start-column="1" selection-end-line="92" selection-end-column="1" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="93" column="34" selection-start-line="93" selection-start-column="34" selection-end-line="93" selection-end-column="34" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#571#572#0" expanded="true" />
             <element signature="e#609#610#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/vectrola/chirpchain/test0/FrequencyTransformer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6956522">
+          <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#1482#1496#0" expanded="true" />
           </folding>
         </state>
       </provider>

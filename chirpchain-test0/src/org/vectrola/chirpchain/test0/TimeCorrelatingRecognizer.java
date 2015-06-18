@@ -26,7 +26,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         private void makePattern() {
             int rows = getMatchRows();
             pattern = new int[rows][];
-            float mx = max(getBins(), 0, getBins().length);
+            float mx = max(getBins());
             float threshold = mx * 0.25f;
             int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
             int rowTempUsed;
@@ -64,7 +64,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         frequencyTransformer.getBinRows(inputBinRows, library.maxCodeRows());
 
         float ex = mean(inputBinRows);
-        float mx = max(inputBinRows, 0, inputBinRows.length);
+        float mx = max(inputBinRows);
 
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             Fingerprint fp = (Fingerprint)getFingerprintForSymbol(i);
@@ -76,9 +76,12 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
             }
         }
 
-        if ((bestQ > 0.5f) && ((secondQ / bestQ) < 0.7f)) {
+        //System.out.print(String.format("R b %.4f s %.4f ", bestQ, secondQ));
+        if ((bestQ > 0.6f) && ((secondQ / bestQ) < 0.3f)) {
+            //System.out.print("Y!");
             return bestSym;
         } else {
+            //System.out.println("n.");
             return -1;
         }
     }
@@ -88,7 +91,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         int zoneHits = 0;
         int zoneSamples = 0;
         int lastZone = 0;
-        float threshold = mx * 0.5f + ex * 0.5f;
+        float threshold = mx * 0.6f + ex * 0.4f;
         for (int i = 0; i < fp.pattern.length; ++i) {
             float patternSum = 0f;
             for (int j = 0; j < fp.pattern[i].length; ++j) {
@@ -99,7 +102,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
             }
             ++zoneSamples;
 
-            int zone = (i + 1) * 4 / fp.pattern.length;
+            int zone = (i + 1) * 6 / fp.pattern.length;
             if (zone != lastZone && zoneSamples > 0) {
                 q *= (float) zoneHits / zoneSamples;
                 lastZone = zone;
@@ -108,9 +111,9 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         return q;
     }
 
-    public static float max(float[] values, int offset, int length) {
+    public static float max(float[] values) {
         float maxValue = values[0];
-        for (int i = offset; i < offset + length; ++i) {
+        for (int i = 0; i < values.length; ++i) {
             maxValue = Math.max(maxValue, values[i]);
         }
         return maxValue;
@@ -124,32 +127,5 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         }
 
         return sum / vals.length;
-    }
-
-    public static float stddev(float[] vals, float ex) {
-        float sumsq = 0f;
-
-        for (int i = 0; i < vals.length; ++i) {
-            float diff = vals[i] - ex;
-            sumsq += diff * diff;
-        }
-
-        return (float) Math.sqrt(sumsq / vals.length);
-    }
-
-    public static float covariance(float[] fp, float fpEx, float[] input, float inputEx) {
-        int length = Math.min(fp.length, input.length);
-
-        float cov = 0f;
-        for (int i = 0; i < length; ++i) {
-            cov += (fp[i] - fpEx) * (input[i] - inputEx);
-        }
-        cov /= length;
-
-        return cov;
-    }
-
-    public static float correlation(float[] fp, float fpEx, float[] input, float inputEx) {
-        return covariance(fp, fpEx, input, inputEx) / (stddev(fp, fpEx) * stddev(input, inputEx));
     }
 }
