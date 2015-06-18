@@ -4,7 +4,7 @@ package org.vectrola.chirpchain.test0;
  * Created by jlunder on 6/16/15.
  */
 public class PeakListRecognizer extends CodeRecognizer {
-    public static class PeakListFingerprint extends CodeRecognizer.CodeFingerprint {
+    public static class Fingerprint extends CodeRecognizer.Fingerprint {
         protected static final FrequencyTransformer ft = new FrequencyTransformer();
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
@@ -14,7 +14,7 @@ public class PeakListRecognizer extends CodeRecognizer {
             return peaks;
         }
 
-        protected PeakListFingerprint(SampleSeries code) {
+        protected Fingerprint(SampleSeries code) {
             super(code);
 
             peaks = new float[getMatchRows()];
@@ -30,7 +30,7 @@ public class PeakListRecognizer extends CodeRecognizer {
     public void fingerprintLibrary() {
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             SampleSeries code = library.getCodeForSymbol(i);
-            codeFingerprints[i] = new PeakListFingerprint(code);
+            codeFingerprints[i] = new Fingerprint(code);
         }
     }
 
@@ -44,7 +44,7 @@ public class PeakListRecognizer extends CodeRecognizer {
         findPeaksInput(inputFingerprint, inputPeaks);
 
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            PeakListFingerprint fp = (PeakListFingerprint)getFingerprintForSymbol(i);
+            Fingerprint fp = (Fingerprint)getFingerprintForSymbol(i);
             float q = matchQuality(fp.getPeaks(), inputPeaks);
             if (q > bestQ) {
                 secondQ = bestQ;

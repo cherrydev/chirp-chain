@@ -1,26 +1,50 @@
 package org.vectrola.chirpchain.test0;
 
+import com.sun.org.apache.xml.internal.utils.IntVector;
+
+import java.util.Vector;
+
 /**
  * Created by jlunder on 6/16/15.
  */
-public class BinPatternRecognizer extends CodeRecognizer {
+public class TimeCorrelatingRecognizer extends CodeRecognizer {
     public static class Fingerprint extends CodeRecognizer.Fingerprint {
         protected static final FrequencyTransformer ft = new FrequencyTransformer();
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
-        private int[] binPattern;
+        private int[][] pattern;
 
-        public int[] getBinPattern() {
-            return binPattern;
+        public int[][] getPattern() {
+            return pattern;
         }
 
         protected Fingerprint(SampleSeries code) {
             super(code);
-            binPattern = findBinPattern(getBins());
+            makePattern();
+        }
+
+        private void makePattern() {
+            int rows = getMatchRows();
+            pattern = new int[rows][];
+            float mx = max(getBins(), 0, getBins().length);
+            float threshold = mx * 0.25f;
+            int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
+            int rowTempUsed;
+            for (int j = 0; j < rows; ++j) {
+                rowTempUsed = 0;
+                for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    int offset = j * FrequencyTransformer.BINS_PER_ROW + i;
+                    if(bins[offset] > threshold) {
+                        rowTemp[rowTempUsed++] = offset;
+                    }
+                }
+                pattern[j] = new int[rowTempUsed];
+                System.arraycopy(rowTemp, 0, pattern[j], 0, rowTempUsed);
+            }
         }
     }
 
-    BinPatternRecognizer(CodeLibrary library) {
+    TimeCorrelatingRecognizer(CodeLibrary library) {
         super(library);
         fingerprintLibrary();
     }
@@ -44,7 +68,7 @@ public class BinPatternRecognizer extends CodeRecognizer {
 
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             Fingerprint fp = (Fingerprint)getFingerprintForSymbol(i);
-            float q = matchQuality(fp.getBinPattern(), inputBinRows, mx * 0.5f + ex * 0.5f);
+            float q = matchQuality(fp, inputBinRows, ex, mx);
             if (q > bestQ) {
                 secondQ = bestQ;
                 bestQ = q;
@@ -59,34 +83,29 @@ public class BinPatternRecognizer extends CodeRecognizer {
         }
     }
 
-    public static float matchQuality(int[] binPattern, float[] inputBinRows, float threshold) {
-        int hits = 0;
-        for (int i = 0; i < binPattern.length; ++i) {
-            int offset = binPattern[i];
-            if (inputBinRows[offset] > threshold) {
-                ++hits;
+    public static float matchQuality(Fingerprint fp, float[] inputBinRows, float ex, float mx) {
+        float q = 1f;
+        int zoneHits = 0;
+        int zoneSamples = 0;
+        int lastZone = 0;
+        float threshold = mx * 0.5f + ex * 0.5f;
+        for (int i = 0; i < fp.pattern.length; ++i) {
+            float patternSum = 0f;
+            for (int j = 0; j < fp.pattern[i].length; ++j) {
+                patternSum += inputBinRows[fp.pattern[i][j]];
             }
-        }
-        return (float) hits / (float) binPattern.length;
-    }
+            if (patternSum > threshold) {
+                ++zoneHits;
+            }
+            ++zoneSamples;
 
-    public static int[] findBinPattern(float[] binRows) {
-        int[] pattern = new int[binRows.length];
-        int patternUsed = 0;
-        int rows = binRows.length / FrequencyTransformer.BINS_PER_ROW;
-        float mx = max(binRows, 0, binRows.length);
-        float threshold = mx * 0.25f;
-        for (int j = 0; j < rows; ++j) {
-            for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                int offset = j * FrequencyTransformer.BINS_PER_ROW + i;
-                if(binRows[offset] > threshold) {
-                    pattern[patternUsed++] = offset;
-                }
+            int zone = (i + 1) * 4 / fp.pattern.length;
+            if (zone != lastZone && zoneSamples > 0) {
+                q *= (float) zoneHits / zoneSamples;
+                lastZone = zone;
             }
         }
-        int[] minPattern = new int[patternUsed];
-        System.arraycopy(pattern, 0, minPattern, 0, patternUsed);
-        return minPattern;
+        return q;
     }
 
     public static float max(float[] values, int offset, int length) {

@@ -181,7 +181,7 @@ public class CodeLibrary {
         public int componentCount;
         public int[] params;
         public SampleSeries code;
-        public PeakListRecognizer.PeakListFingerprint fp;
+        public PeakListRecognizer.Fingerprint fp;
         float[] inputPeaks;
         public float highestQ;
         public float totalQ;
@@ -214,7 +214,7 @@ public class CodeLibrary {
                 params[i * 5 + 4] = 10 + r.nextInt(10); // dur
             }
             code = makeChirpCode(timeScale, minFreq, freqScale, componentCount, params);
-            fp = new PeakListRecognizer.PeakListFingerprint(code);
+            fp = new PeakListRecognizer.Fingerprint(code);
             inputPeaks = new float[fp.getMatchRows()];
             PeakListRecognizer.findPeaksInput(fp.getBins(), inputPeaks);
         }

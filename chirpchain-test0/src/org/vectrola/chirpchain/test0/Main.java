@@ -94,9 +94,9 @@ public class Main {
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             System.out.print(String.format("%2d:", i));
             float[] inputPeaks = new float[cr.getFingerprintForSymbol(i).getMatchRows()];
-            PeakListRecognizer.findPeaksInput(((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(i)).getBins(), inputPeaks);
+            PeakListRecognizer.findPeaksInput(((PeakListRecognizer.Fingerprint)cr.getFingerprintForSymbol(i)).getBins(), inputPeaks);
             for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
-                float q = PeakListRecognizer.matchQuality(((PeakListRecognizer.PeakListFingerprint)cr.getFingerprintForSymbol(j)).getPeaks(), inputPeaks);
+                float q = PeakListRecognizer.matchQuality(((PeakListRecognizer.Fingerprint)cr.getFingerprintForSymbol(j)).getPeaks(), inputPeaks);
                 System.out.print(String.format("  %5.2f", q));
             }
             System.out.println();
@@ -107,7 +107,7 @@ public class Main {
 
         BinPatternRecognizer bpr = new BinPatternRecognizer(l);
 
-        printFingerprint((BinPatternRecognizer.BinPatternFingerprint)bpr.getFingerprintForSymbol(8));
+        printFingerprint((BinPatternRecognizer.Fingerprint)bpr.getFingerprintForSymbol(8));
         FrequencyTransformer xf = new FrequencyTransformer();
         xf.addSamples(challenge);
         skipRows(xf, (int)(9.1000f / FrequencyTransformer.ROW_TIME));
@@ -129,7 +129,7 @@ public class Main {
         /*
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             BinPatternRecognizer.BinPatternFingerprint fp =
-                    (BinPatternRecognizer.BinPatternFingerprint)bpr.getFingerprintForSymbol(i);
+                    (BinPatternRecognizer.Fingerprint)bpr.getFingerprintForSymbol(i);
             float ex = PeakListRecognizer.mean(fp.getBins());
             float mx = PeakListRecognizer.max(fp.getBins(), 0, fp.getBins().length);
 
@@ -139,6 +139,10 @@ public class Main {
         */
 
 
+        System.out.print("Recognizing with TimeCorrelatingRecognizer, hw:\n");
+        recognize(new TimeCorrelatingRecognizer(l), hw);
+        System.out.print("Recognizing with TimeCorrelatingRecognizer, challenge:\n");
+        recognize(new TimeCorrelatingRecognizer(l), challenge);
         System.out.print("Recognizing with BinPatternRecognizer, hw:\n");
         recognize(new BinPatternRecognizer(l), hw);
         System.out.print("Recognizing with BinPatternRecognizer, challenge:\n");
@@ -224,7 +228,7 @@ public class Main {
         System.out.println("+");
     }
 
-    private static void printFingerprint(BinPatternRecognizer.BinPatternFingerprint fp) {
+    private static void printFingerprint(BinPatternRecognizer.Fingerprint fp) {
         printBinRows(fp.getBins(), new RowAnnotator() {
             @Override
             public int annotateChar(int row, int col, float[] bins, float value) {
@@ -240,7 +244,7 @@ public class Main {
         System.out.println();
     }
 
-    private static void printFingerprint(PeakListRecognizer.PeakListFingerprint fp) {
+    private static void printFingerprint(PeakListRecognizer.Fingerprint fp) {
         float[] pk = fp.getPeaks();
         printBinRows(fp.getBins(), new RowAnnotator() {
             @Override

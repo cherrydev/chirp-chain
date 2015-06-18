@@ -1,12 +1,10 @@
 package org.vectrola.chirpchain.test0;
 
-import com.sun.org.apache.bcel.internal.classfile.Code;
-
 /**
  * Created by jlunder on 6/10/15.
  */
 public class CodeRecognizer {
-    public static class CodeFingerprint {
+    public static class Fingerprint {
         protected static final FrequencyTransformer ft = new FrequencyTransformer();
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
@@ -22,7 +20,7 @@ public class CodeRecognizer {
             return matchRows;
         }
 
-        public CodeFingerprint(SampleSeries code) {
+        public Fingerprint(SampleSeries code) {
             this.code = code;
             this.matchRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
 
@@ -42,7 +40,7 @@ public class CodeRecognizer {
 
     protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer();
     protected CodeLibrary library;
-    protected CodeFingerprint[] codeFingerprints;
+    protected Fingerprint[] codeFingerprints;
 
     private boolean hasNextSymbol;
     private int nextSymbol;
@@ -52,10 +50,10 @@ public class CodeRecognizer {
 
     public CodeRecognizer(CodeLibrary library) {
         this.library = library;
-        this.codeFingerprints = new CodeFingerprint[CodeLibrary.NUM_SYMBOLS];
+        this.codeFingerprints = new Fingerprint[CodeLibrary.NUM_SYMBOLS];
     }
 
-    public CodeFingerprint getFingerprintForSymbol(int symbol)
+    public Fingerprint getFingerprintForSymbol(int symbol)
     {
         return codeFingerprints[symbol];
     }
