@@ -5,9 +5,6 @@ package org.vectrola.chirpchain.test0;
  */
 public class BinPatternRecognizer extends CodeRecognizer {
     public static class Fingerprint extends CodeRecognizer.Fingerprint {
-        protected static final FrequencyTransformer ft = new FrequencyTransformer();
-        protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
-
         private int[] binPattern;
 
         public int[] getBinPattern() {
@@ -37,7 +34,7 @@ public class BinPatternRecognizer extends CodeRecognizer {
         int bestSym = -1;
         float bestQ = 0f;
         float secondQ = 0f;
-        frequencyTransformer.getBinRows(inputBinRows, library.maxCodeRows());
+        fingerprintFT.getBinRows(inputBinRows, library.maxCodeRows());
 
         float ex = mean(inputBinRows);
         float mx = max(inputBinRows, 0, inputBinRows.length);

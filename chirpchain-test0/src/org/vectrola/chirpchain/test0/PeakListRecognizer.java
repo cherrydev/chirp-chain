@@ -5,9 +5,6 @@ package org.vectrola.chirpchain.test0;
  */
 public class PeakListRecognizer extends CodeRecognizer {
     public static class Fingerprint extends CodeRecognizer.Fingerprint {
-        protected static final FrequencyTransformer ft = new FrequencyTransformer();
-        protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
-
         private float[] peaks;
 
         public float[] getPeaks() {
@@ -40,7 +37,7 @@ public class PeakListRecognizer extends CodeRecognizer {
         int bestSym = -1;
         float bestQ = 0f;
         float secondQ = 0f;
-        frequencyTransformer.getBinRows(inputFingerprint, library.maxCodeRows());
+        fingerprintFT.getBinRows(inputFingerprint, library.maxCodeRows());
         findPeaksInput(inputFingerprint, inputPeaks);
 
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {

@@ -10,7 +10,7 @@ import javax.sound.sampled.*;
  */
 public class SampleSeries {
 
-    public static final float SAMPLE_RATE = 48000f;
+    public static final float SAMPLE_RATE = 22050;
 
     private float[] samples = null;
 
@@ -63,11 +63,12 @@ public class SampleSeries {
             throw new IOException(String.format("Unusable or unrecognizable audio file format for '%s'", filename), e);
         }
         byte[] bytes = new byte[4096];
-        SampleSeries series = new SampleSeries(ais.available() / 2);
+        SampleSeries series = new SampleSeries(1024);
         int totalSamples = 0;
+        int bytesRead;
 
         do {
-            int bytesRead = ais.read(bytes);
+            bytesRead = ais.read(bytes);
             assert (bytesRead & 1) == 0;
             if (totalSamples + bytesRead / 2 > series.samples.length) {
                 series.resize((totalSamples + bytesRead / 2) * 3 / 2);
@@ -76,7 +77,7 @@ public class SampleSeries {
                 short sample = (short)(((int)bytes[i] & 0xFF) | ((int) bytes[i + 1] << 8));
                 series.samples[totalSamples++] = (float) sample / 32767f;
             }
-        } while (ais.available() > 0);
+        } while (bytesRead > 0);
 
         if (series.samples.length > totalSamples) {
             series.resize(totalSamples);

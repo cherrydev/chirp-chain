@@ -5,7 +5,7 @@ package org.vectrola.chirpchain.test0;
  */
 public class CodeRecognizer {
     public static class Fingerprint {
-        protected static final FrequencyTransformer ft = new FrequencyTransformer();
+        protected static final FrequencyTransformer ft = new FrequencyTransformer(false, true);
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
         protected SampleSeries code;
@@ -38,7 +38,7 @@ public class CodeRecognizer {
         }
     }
 
-    protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer();
+    protected FrequencyTransformer fingerprintFT = new FrequencyTransformer(false, false);
     protected CodeLibrary library;
     protected Fingerprint[] codeFingerprints;
 
@@ -59,7 +59,7 @@ public class CodeRecognizer {
     }
 
     public void process(SampleSeries samples) {
-        frequencyTransformer.addSamples(samples);
+        fingerprintFT.addSamples(samples);
     }
 
     public boolean hasNextSymbol() {
@@ -92,7 +92,7 @@ public class CodeRecognizer {
                 nextSymbol = matchSym;
                 lastSymbolTime = time;
                 time += codeRows * FrequencyTransformer.ROW_TIME;
-                frequencyTransformer.discardRows(codeRows - 2);
+                fingerprintFT.discardRows(codeRows - 2);
             }
             else {
                 ++rowsSinceSymbolDetected;
@@ -102,13 +102,13 @@ public class CodeRecognizer {
                     nextSymbol = -1; // break
                 }
                 time += FrequencyTransformer.ROW_TIME;
-                frequencyTransformer.discardRows(1);
+                fingerprintFT.discardRows(1);
             }
         }
     }
 
     protected boolean canMatch() {
-        return frequencyTransformer.availableRows() >= library.maxCodeRows();
+        return fingerprintFT.availableRows() >= library.maxCodeRows();
     }
 
     protected int tryFindMatch() {

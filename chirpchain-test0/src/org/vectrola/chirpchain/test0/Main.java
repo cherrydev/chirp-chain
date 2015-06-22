@@ -105,10 +105,11 @@ public class Main {
 
         SampleSeries challenge = SampleSeries.readFromFile("helloworld-challenge.wav");
 
+        /*
         BinPatternRecognizer bpr = new BinPatternRecognizer(l);
 
         printFingerprint((BinPatternRecognizer.Fingerprint)bpr.getFingerprintForSymbol(8));
-        FrequencyTransformer xf = new FrequencyTransformer();
+        FrequencyTransformer xf = new FrequencyTransformer(false);
         xf.addSamples(challenge);
         skipRows(xf, (int)(9.1000f / FrequencyTransformer.ROW_TIME));
         float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
@@ -118,6 +119,7 @@ public class Main {
             printNormalizedBinRows(bins, null);
             xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
         }
+        */
 
 
 
@@ -138,19 +140,37 @@ public class Main {
         }
         */
 
+        SampleSeries loudChallenge = SampleSeries.readFromFile("helloworld-challenge-loud.wav");
+        SampleSeries quietChallenge = SampleSeries.readFromFile("helloworld-challenge-quiet.wav");
+        SampleSeries easyChallenge = SampleSeries.readFromFile("chirpSamples/closeRange.wav");
+
+        FrequencyTransformer xf = new FrequencyTransformer(true, false);
+        // warm up adaptive noise rejection
+        xf.addSamples(easyChallenge);
+        while(xf.availableRows() > 0) {
+            xf.discardRows(xf.availableRows());
+        }
+        xf.addSamples(quietChallenge);
+        float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
+        for(int i = 0; i < 10; ++i) {
+            xf.getBinRows(bins, bins.length / FrequencyTransformer.BINS_PER_ROW);
+            System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
+            //printBinRows(bins, null);
+            xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
+        }
+
+        // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
 
         System.out.print("Recognizing with TimeCorrelatingRecognizer, hw:\n");
         recognize(new TimeCorrelatingRecognizer(l), hw);
         System.out.print("Recognizing with TimeCorrelatingRecognizer, challenge:\n");
         recognize(new TimeCorrelatingRecognizer(l), challenge);
-        System.out.print("Recognizing with BinPatternRecognizer, hw:\n");
-        recognize(new BinPatternRecognizer(l), hw);
-        System.out.print("Recognizing with BinPatternRecognizer, challenge:\n");
-        recognize(new BinPatternRecognizer(l), challenge);
-        System.out.print("Recognizing with PeakListRecognizer, hw:\n");
-        recognize(new PeakListRecognizer(l), hw);
-        System.out.print("Recognizing with PeakListRecognizer, challenge:\n");
-        recognize(new PeakListRecognizer(l), challenge);
+        System.out.print("Recognizing with TimeCorrelatingRecognizer, loud challenge:\n");
+        recognize(new TimeCorrelatingRecognizer(l), loudChallenge);
+        System.out.print("Recognizing with TimeCorrelatingRecognizer, quiet challenge:\n");
+        recognize(new TimeCorrelatingRecognizer(l), quietChallenge);
+        System.out.print("Recognizing with TimeCorrelatingRecognizer, easy challenge:\n");
+        recognize(new TimeCorrelatingRecognizer(l), easyChallenge);
 
         System.out.print("Done.\n");
     }
