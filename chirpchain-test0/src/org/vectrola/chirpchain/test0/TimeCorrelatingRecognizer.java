@@ -83,7 +83,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         int zoneHits = 0;
         int zoneSamples = 0;
         int lastZone = 0;
-        float threshold = 0.05f;
+        float threshold = 0.02f;
         for (int i = 0; i < fp.pattern.length; ++i) {
             float patternSum = 0f;
             for (int j = 0; j < fp.pattern[i].length; ++j) {
@@ -106,7 +106,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
                 zoneSamples = 0;
             }
         }
-        return hits >= 4 ? q : 0f;
+        return hits == 6 ? q : 0f;
     }
 
     /*

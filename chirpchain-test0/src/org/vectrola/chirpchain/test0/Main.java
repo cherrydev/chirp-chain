@@ -146,7 +146,7 @@ public class Main {
 
         FrequencyTransformer xf = new FrequencyTransformer(true, false);
         // warm up adaptive noise rejection
-        xf.addSamples(easyChallenge);
+        xf.addSamples(quietChallenge);
         while(xf.availableRows() > 0) {
             xf.discardRows(xf.availableRows());
         }
@@ -155,7 +155,7 @@ public class Main {
         for(int i = 0; i < 10; ++i) {
             xf.getBinRows(bins, bins.length / FrequencyTransformer.BINS_PER_ROW);
             System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
-            //printBinRows(bins, null);
+            printBinRows(bins, null);
             xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
         }
 
@@ -200,15 +200,6 @@ public class Main {
         }
     }
 
-    private static void printNormalizedBinRows(float[] bins, RowAnnotator annotator) {
-        float ex = BinPatternRecognizer.mean(bins);
-        float mx = BinPatternRecognizer.max(bins, 0, bins.length);
-        for (int i = 0; i < bins.length; ++i) {
-            bins[i] = Math.max(bins[i], 0f) * 3f / mx;
-        }
-        printBinRows(bins, annotator);
-    }
-
     private static class RowAnnotator {
         public String annotateRow(int row, float[] bins) {
             return "";
@@ -246,43 +237,6 @@ public class Main {
             System.out.print("-");
         }
         System.out.println("+");
-    }
-
-    private static void printFingerprint(BinPatternRecognizer.Fingerprint fp) {
-        printBinRows(fp.getBins(), new RowAnnotator() {
-            @Override
-            public int annotateChar(int row, int col, float[] bins, float value) {
-                int offset = (row * FrequencyTransformer.BINS_PER_ROW) + col;
-                for(int i: fp.getBinPattern()) {
-                    if(i == offset) {
-                        return 'X';
-                    }
-                }
-                return -1;
-            }
-        });
-        System.out.println();
-    }
-
-    private static void printFingerprint(PeakListRecognizer.Fingerprint fp) {
-        float[] pk = fp.getPeaks();
-        printBinRows(fp.getBins(), new RowAnnotator() {
-            @Override
-            public int annotateChar(int row, int col, float[] bins, float value) {
-                if(Math.abs(pk[row] - FrequencyTransformer.BIN_FREQUENCIES[row]) < FrequencyTransformer.BIN_BANDWIDTH * 0.5f) {
-                    return (int)'F';
-                }
-                else {
-                    return -1;
-                }
-            }
-
-            @Override
-            public String annotateRow(int row, float[] bins) {
-                return String.format("%7.2f", pk[row]);
-            }
-        });
-        System.out.println();
     }
 
     public static SampleSeries encodeString(CodeLibrary l, String s) {

@@ -136,7 +136,7 @@ public class CodeLibrary {
                 continue;
             }
             int pkZeros = 0;
-            float[] peaks = e.fp.getPeaks();
+            float[] peaks = null;//e.fp.getPeaks();
             for(int i = 0; i < peaks.length; ++i) {
                 if(peaks[i] == 0f) {
                     ++pkZeros;
@@ -181,7 +181,7 @@ public class CodeLibrary {
         public int componentCount;
         public int[] params;
         public SampleSeries code;
-        public PeakListRecognizer.Fingerprint fp;
+        public CodeRecognizer.Fingerprint fp;
         float[] inputPeaks;
         public float highestQ;
         public float totalQ;
@@ -214,9 +214,7 @@ public class CodeLibrary {
                 params[i * 5 + 4] = 10 + r.nextInt(10); // dur
             }
             code = makeChirpCode(timeScale, minFreq, freqScale, componentCount, params);
-            fp = new PeakListRecognizer.Fingerprint(code);
-            inputPeaks = new float[fp.getMatchRows()];
-            PeakListRecognizer.findPeaksInput(fp.getBins(), inputPeaks);
+            fp = new CodeRecognizer.Fingerprint(code);
         }
 
         private float getSelfMatchQ() {
@@ -226,14 +224,20 @@ public class CodeLibrary {
             float[] offsetInputBins = new float[ft.availableRows() * FrequencyTransformer.BINS_PER_ROW];
             float[] offsetInputPeaks = new float[ft.availableRows()];
             ft.getBinRows(offsetInputBins, ft.availableRows());
+            /*
             PeakListRecognizer.findPeaksInput(offsetInputBins, offsetInputPeaks);
             return PeakListRecognizer.matchQuality(fp.getPeaks(), inputPeaks) *
                     PeakListRecognizer.matchQuality(fp.getPeaks(), offsetInputPeaks);
+                    */
+            return 0f;
         }
 
         private float getCodeMatchQ(CodeEntry other) {
+            /*
             return Math.max(slidingMatchQ(fp.getPeaks(), other.inputPeaks),
                     slidingMatchQ(other.fp.getPeaks(), inputPeaks));
+                    */
+            return 0f;
         }
 
         private static float slidingMatchQ(float[] peaksA, float[] peaksB) {
@@ -269,7 +273,8 @@ public class CodeLibrary {
                     testBed[j] = 0f;
                 }
 
-                bestQ = Math.max(PeakListRecognizer.matchQuality(testBed, peaksB), bestQ);
+                //bestQ = Math.max(PeakListRecognizer.matchQuality(testBed, peaksB), bestQ);
+                bestQ = 0;
             }
             return bestQ;
         }
