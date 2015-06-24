@@ -3,3 +3,5 @@ chirp-chain-android/app/build
 chirp-chain-android/.gradle
 chirp-chain-android/.idea
 chirp-chain-android/local.properties
+ChirpUSBDriverDemo/app/src/main/obj
+ChirpUSBDriverDemo/app/src/main/libs
