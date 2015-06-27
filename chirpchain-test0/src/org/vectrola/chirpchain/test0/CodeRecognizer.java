@@ -1,11 +1,13 @@
 package org.vectrola.chirpchain.test0;
 
+import com.sun.org.apache.bcel.internal.classfile.Code;
+
 /**
  * Created by jlunder on 6/10/15.
  */
-public class CodeRecognizer {
+public abstract class CodeRecognizer {
     public static class Fingerprint {
-        protected static final FrequencyTransformer ft = new FrequencyTransformer(false, true);
+        protected static final FrequencyTransformer fingerprintFT = new FrequencyTransformer(false, true);
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
         protected SampleSeries code;
@@ -26,19 +28,19 @@ public class CodeRecognizer {
 
             int fingerprintRows;
 
-            synchronized (ft) {
-                ft.flush();
-                ft.addSamples(code);
-                ft.addSamples(pad);
+            synchronized (fingerprintFT) {
+                fingerprintFT.flush();
+                fingerprintFT.addSamples(code);
+                fingerprintFT.addSamples(pad);
 
                 bins = new float[matchRows * FrequencyTransformer.BINS_PER_ROW];
-                ft.getBinRows(bins, matchRows);
+                fingerprintFT.getBinRows(bins, matchRows);
             }
 
         }
     }
 
-    protected FrequencyTransformer fingerprintFT = new FrequencyTransformer(false, false);
+    protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer(false, false);
     protected CodeLibrary library;
     protected Fingerprint[] codeFingerprints;
 
@@ -58,12 +60,34 @@ public class CodeRecognizer {
         return codeFingerprints[symbol];
     }
 
-    public void process(SampleSeries samples) {
-        fingerprintFT.addSamples(samples);
+    public void warmup(SampleSeries samples) {
+        frequencyTransformer.addSamples(samples);
+        while(frequencyTransformer.availableRows() > 0) {
+            frequencyTransformer.discardRows(frequencyTransformer.availableRows());
+        }
     }
 
+    public void process(SampleSeries samples) {
+        frequencyTransformer.addSamples(samples);
+    }
+
+    public boolean matchQualityGraph(float[] results) {
+        int resultsRemaining = results.length / CodeLibrary.NUM_SYMBOLS;
+        float bins[] = new float[library.maxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        for(int i = 0; i < resultsRemaining; ++i) {
+            frequencyTransformer.getBinRows(bins, library.maxCodeRows());
+            for(int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
+                results[i * CodeLibrary.NUM_SYMBOLS + j] = matchQuality(getFingerprintForSymbol(j), bins);
+            }
+            frequencyTransformer.discardRows(1);
+        }
+        return true;
+    }
+
+    public abstract float matchQuality(Fingerprint fp, float[] inputBinRows);
+
     public boolean hasNextSymbol() {
-        if(!hasNextSymbol) {
+        if (!hasNextSymbol) {
             tryFillNextSymbol();
         }
         return hasNextSymbol;
@@ -92,7 +116,7 @@ public class CodeRecognizer {
                 nextSymbol = matchSym;
                 lastSymbolTime = time;
                 time += codeRows * FrequencyTransformer.ROW_TIME;
-                fingerprintFT.discardRows(codeRows - 2);
+                frequencyTransformer.discardRows(codeRows - 2);
             }
             else {
                 ++rowsSinceSymbolDetected;
@@ -102,13 +126,13 @@ public class CodeRecognizer {
                     nextSymbol = -1; // break
                 }
                 time += FrequencyTransformer.ROW_TIME;
-                fingerprintFT.discardRows(1);
+                frequencyTransformer.discardRows(1);
             }
         }
     }
 
     protected boolean canMatch() {
-        return fingerprintFT.availableRows() >= library.maxCodeRows();
+        return frequencyTransformer.availableRows() >= library.maxCodeRows();
     }
 
     protected int tryFindMatch() {

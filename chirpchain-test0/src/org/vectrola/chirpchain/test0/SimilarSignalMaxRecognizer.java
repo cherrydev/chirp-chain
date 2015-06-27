@@ -3,7 +3,7 @@ package org.vectrola.chirpchain.test0;
 /**
  * Created by jlunder on 6/16/15.
  */
-public class TimeCorrelatingRecognizer extends CodeRecognizer {
+public class SimilarSignalMaxRecognizer extends CodeRecognizer {
     public static class Fingerprint extends CodeRecognizer.Fingerprint {
         private int[][] pattern;
 
@@ -37,7 +37,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         }
     }
 
-    TimeCorrelatingRecognizer(CodeLibrary library) {
+    SimilarSignalMaxRecognizer(CodeLibrary library) {
         super(library);
         fingerprintLibrary();
     }
@@ -79,68 +79,36 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
 
     public float matchQuality(CodeRecognizer.Fingerprint genericFp, float[] inputBinRows) {
         Fingerprint fp = (Fingerprint)genericFp;
-        float q = 1f;
-        int hits = 0;
-        int zoneHits = 0;
         int zoneSamples = 0;
         int lastZone = 0;
-        float threshold = 0.01f;
+        float[] zoneMeans = new float[6];
         for (int i = 0; i < fp.pattern.length; ++i) {
-            float patternSum = 0f;
+            float rowMax = 0f;
             for (int j = 0; j < fp.pattern[i].length; ++j) {
-                patternSum += inputBinRows[fp.pattern[i][j]];
+                float val = inputBinRows[fp.pattern[i][j]];
+                rowMax = Math.max(rowMax, val);
             }
-            if (patternSum > threshold) {
-                ++zoneHits;
-            }
+            zoneMeans[lastZone] += rowMax;
             ++zoneSamples;
 
-            int zone = (i + 1) * 6 / fp.pattern.length;
+            int zone = (i + 1) * zoneMeans.length / fp.pattern.length;
             if (zone != lastZone && zoneSamples > 0) {
-                float zoneQ = (float) zoneHits / zoneSamples;
-                q *= zoneQ;
-                if(zoneQ >= 0.5f) {
-                    ++hits;
-                }
-                lastZone = zone;
-                zoneHits = 0;
+                zoneMeans[lastZone] /= zoneSamples;
                 zoneSamples = 0;
             }
         }
-        return hits >= 5 ? q : 0f;
-    }
-
-    /*
-    public static float matchQuality(Fingerprint fp, float[] inputBinRows) {
-        float q = 1f;
-        int hits = 0;
-        int zoneHits = 0;
-        int zoneSamples = 0;
-        int lastZone = 0;
-        float threshold = 0.1f;
-        for (int i = 0; i < fp.pattern.length; ++i) {
-            for (int j = 0; j < fp.pattern[i].length; ++j) {
-                if(inputBinRows[fp.pattern[i][j]] > 0f) {
-                    ++zoneHits;
-                }
-            }
-            zoneSamples += fp.pattern[i].length;
-
-            int zone = (i + 1) * 6 / fp.pattern.length;
-            if (zone != lastZone && zoneSamples > 0) {
-                float zoneQ = (float) zoneHits / zoneSamples;
-                q *= zoneQ;
-                if(zoneQ >= 0.6f) {
-                    ++hits;
-                }
-                lastZone = zone;
-                zoneHits = 0;
-                zoneSamples = 0;
-            }
+        float meanOfMeans = mean(zoneMeans);
+        float stdDevOfMeans = 0f;
+        for(int i = 0; i < zoneMeans.length; ++i) {
+            float dev = zoneMeans[i] - meanOfMeans;
+            stdDevOfMeans += dev * dev;
         }
-        return hits >= 5 ? q : 0f;
+        stdDevOfMeans = (float)Math.sqrt(stdDevOfMeans / zoneMeans.length);
+        if(meanOfMeans > 0f) {
+            return 1.0f / (1.0f + stdDevOfMeans / meanOfMeans);
+        }
+        return 0f;
     }
-    */
 
 
     public static float max(float[] values) {

@@ -16,17 +16,17 @@ public class Main {
             s.setSample(i, sample);
             s.setSample(s.size() - 1 - i, sample);
         }
-        FrequencyTransformer ft = new FrequencyTransformer();
+        FrequencyTransformer fingerprintFT = new FrequencyTransformer();
         for(int i = 0; i < 30; ++i) {
-            ft.addSamples(s);
+            fingerprintFT.addSamples(s);
         }
-        System.out.println(String.format("Frequency transformer test (%d rows):", ft.availableRows()));
+        System.out.println(String.format("Frequency transformer test (%d rows):", fingerprintFT.availableRows()));
         char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
         int rowCount = 0;
-        while(ft.availableRows() > 0) {
+        while(fingerprintFT.availableRows() > 0) {
             float[] bins = new float[FrequencyTransformer.BINS_PER_ROW * 3];
-            int rows = Math.min(ft.availableRows(), 3);
-            ft.getBinRows(bins, rows);
+            int rows = Math.min(fingerprintFT.availableRows(), 3);
+            fingerprintFT.getBinRows(bins, rows);
             for (int j = 0; j < rows; ++j) {
                 System.out.print('|');
                 for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
@@ -35,7 +35,7 @@ public class Main {
                 }
                 System.out.println(String.format("| %d", rowCount++));
             }
-            ft.discardRows(rows);
+            fingerprintFT.discardRows(rows);
         }
         System.out.println();
 
@@ -140,44 +140,63 @@ public class Main {
         }
         */
 
-        SampleSeries loudChallenge = SampleSeries.readFromFile("helloworld-challenge-loud.wav");
-        SampleSeries quietChallenge = SampleSeries.readFromFile("helloworld-challenge-quiet.wav");
+        SampleSeries closeLoudChallenge = SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav");
         SampleSeries easyChallenge = SampleSeries.readFromFile("chirpSamples/closeRange.wav");
 
         FrequencyTransformer xf = new FrequencyTransformer(true, false);
         // warm up adaptive noise rejection
-        xf.addSamples(quietChallenge);
+        xf.addSamples(closeLoudChallenge);
         while(xf.availableRows() > 0) {
             xf.discardRows(xf.availableRows());
         }
-        xf.addSamples(quietChallenge);
+        xf.addSamples(closeLoudChallenge);
         float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
         for(int i = 0; i < 10; ++i) {
             xf.getBinRows(bins, bins.length / FrequencyTransformer.BINS_PER_ROW);
-            System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
-            printBinRows(bins, null);
+            //System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
+            //printHeatMap(bins, FrequencyTransformer.BINS_PER_ROW, i == 0, i == 9, null);
             xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
         }
 
         // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
 
-        System.out.print("Recognizing with TimeCorrelatingRecognizer, hw:\n");
+        System.out.print("Recognizing with SimilarSignalMaxRecognizer, hw:\n");
+        printQualityHeatMap(l, hw, new SimilarSignalMaxRecognizer(l));
+        printQualityHeatMap(l, hw, new TimeCorrelatingRecognizer(l));
+        recognize(new SimilarSignalMaxRecognizer(l), hw);
         recognize(new TimeCorrelatingRecognizer(l), hw);
-        System.out.print("Recognizing with TimeCorrelatingRecognizer, challenge:\n");
-        recognize(new TimeCorrelatingRecognizer(l), challenge);
-        System.out.print("Recognizing with TimeCorrelatingRecognizer, loud challenge:\n");
-        recognize(new TimeCorrelatingRecognizer(l), loudChallenge);
-        System.out.print("Recognizing with TimeCorrelatingRecognizer, quiet challenge:\n");
-        recognize(new TimeCorrelatingRecognizer(l), quietChallenge);
-        System.out.print("Recognizing with TimeCorrelatingRecognizer, easy challenge:\n");
-        recognize(new TimeCorrelatingRecognizer(l), easyChallenge);
+
+        System.out.print("Recognizing with SimilarSignalMaxRecognizer, close loud challenge:\n");
+        recognize(new SimilarSignalMaxRecognizer(l), closeLoudChallenge);
+        System.out.print("Recognizing with SimilarSignalMaxRecognizer, easy challenge:\n");
+        recognize(new SimilarSignalMaxRecognizer(l), easyChallenge);
 
         System.out.print("Done.\n");
+    }
+
+    private static void printQualityHeatMap(CodeLibrary l, SampleSeries series, CodeRecognizer rec) {
+        int numRows = (int)(series.size() / (FrequencyTransformer.ROW_TIME * SampleSeries.SAMPLE_RATE)) -
+                l.maxCodeRows() - (int)Math.ceil(FrequencyTransformer.WAVELET_WINDOW / FrequencyTransformer.ROW_TIME);
+        float[] heatMap = new float[numRows * CodeLibrary.NUM_SYMBOLS];
+        rec.warmup(series);
+        rec.process(series);
+        rec.matchQualityGraph(heatMap);
+        printHeatMap(heatMap, CodeLibrary.NUM_SYMBOLS, true, true, new RowAnnotator() {
+            public String annotateColBefore(int col, float[] bins) {
+                if(col < 0) {
+                    return "    ";
+                }
+                else {
+                    return String.format("%2d: ", col);
+                }
+            }
+        });
     }
 
     private static void recognize(CodeRecognizer r, SampleSeries series)
     {
         System.out.print("Symbols:");
+        r.warmup(series);
         r.process(series);
         while(r.hasNextSymbol()) {
             int sym = r.nextSymbol();
@@ -201,7 +220,16 @@ public class Main {
     }
 
     private static class RowAnnotator {
-        public String annotateRow(int row, float[] bins) {
+        public String annotateRowBefore(int row, float[] bins) {
+            return "";
+        }
+        public String annotateRowAfter(int row, float[] bins) {
+            return "";
+        }
+        public String annotateColBefore(int col, float[] bins) {
+            return "";
+        }
+        public String annotateColAfter(int col, float[] bins) {
             return "";
         }
         public int annotateChar(int row, int col, float[] bins, float value) {
@@ -209,34 +237,42 @@ public class Main {
         }
     }
 
-    private static void printBinRows(float[] binRows, RowAnnotator annotator) {
+    private static void printHeatMap(float[] data, int width, boolean topFrame, boolean bottomFrame, RowAnnotator annotator) {
         char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
+        int length = data.length / width;
 
         if(annotator == null) {
             annotator = new RowAnnotator();
         }
-        System.out.print("+");
-        for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-            System.out.print("-");
+
+        if(topFrame) {
+            System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
+            for (int i = 0; i < length; ++i) {
+                System.out.print("-");
+            }
+            System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
         }
-        System.out.println("+");
-        for(int j = 0; j < binRows.length / FrequencyTransformer.BINS_PER_ROW; ++j) {
-            System.out.print('|');
-            for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                float val = binRows[j * FrequencyTransformer.BINS_PER_ROW + i];
-                int c = annotator.annotateChar(j, i, binRows, val);
+
+        for(int i = 0; i < width; ++i) {
+            System.out.print(String.format("%s|", annotator.annotateColBefore(i, data)));
+            for(int j = 0; j < length; ++j) {
+                float val = data[j * width + i];
+                int c = annotator.annotateChar(j, i, data, val);
                 if(c < 0) {
                     c = graphChars[Math.max(0, Math.min(graphChars.length - 1, (int) Math.floor(graphChars.length * val)))];
                 }
                 System.out.print((char)c);
             }
-            System.out.println(String.format("| %s", annotator.annotateRow(j, binRows)));
+            System.out.println(String.format("| %s", annotator.annotateColAfter(i, data)));
         }
-        System.out.print("+");
-        for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-            System.out.print("-");
+
+        if(bottomFrame) {
+            System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
+            for (int i = 0; i < length; ++i) {
+                System.out.print("-");
+            }
+            System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
         }
-        System.out.println("+");
     }
 
     public static SampleSeries encodeString(CodeLibrary l, String s) {
