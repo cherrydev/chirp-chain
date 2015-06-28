@@ -20,7 +20,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
             int rows = getMatchRows();
             pattern = new int[rows][];
             float mx = max(getBins());
-            float threshold = mx * 0.25f;
+            float threshold = mx * 0.5f;
             int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
             int rowTempUsed;
             for (int j = 0; j < rows; ++j) {
@@ -38,7 +38,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
     }
 
     TimeCorrelatingRecognizer(CodeLibrary library) {
-        super(library, 0.6f, 0.3f);
+        super(library, 0.1f, 0.5f);
         fingerprintLibrary();
     }
 
@@ -56,7 +56,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
         int zoneHits = 0;
         int zoneSamples = 0;
         int lastZone = 0;
-        float threshold = 0.01f;
+        float threshold = 0.001f;
         for (int i = 0; i < fp.pattern.length; ++i) {
             float patternSum = 0f;
             for (int j = 0; j < fp.pattern[i].length; ++j) {

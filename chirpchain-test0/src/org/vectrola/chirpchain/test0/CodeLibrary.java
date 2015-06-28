@@ -16,7 +16,7 @@ public class CodeLibrary {
         return codeSamples[symbol];
     }
 
-    public int maxCodeRows() {
+    public int getMaxCodeRows() {
         return (int) Math.ceil(getMaxCodeLength() / FrequencyTransformer.ROW_TIME);
     }
 
@@ -221,9 +221,9 @@ public class CodeLibrary {
             FrequencyTransformer ft = new FrequencyTransformer(false, true);
             ft.addSamples(new SampleSeries(FrequencyTransformer.ROW_SAMPLES / 2));
             ft.addSamples(code);
-            float[] offsetInputBins = new float[ft.availableRows() * FrequencyTransformer.BINS_PER_ROW];
-            float[] offsetInputPeaks = new float[ft.availableRows()];
-            ft.getBinRows(offsetInputBins, ft.availableRows());
+            float[] offsetInputBins = new float[ft.getAvailableRows() * FrequencyTransformer.BINS_PER_ROW];
+            float[] offsetInputPeaks = new float[ft.getAvailableRows()];
+            ft.getBinRows(offsetInputBins, ft.getAvailableRows());
             /*
             PeakListRecognizer.findPeaksInput(offsetInputBins, offsetInputPeaks);
             return PeakListRecognizer.matchQuality(fp.getPeaks(), inputPeaks) *

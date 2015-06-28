@@ -20,7 +20,6 @@ public class FrequencyTransformer {
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / BIN_BANDWIDTH) + 1;
     public static final int WAVELET_WINDOW_SAMPLES = (int)Math.rint(DESIRED_WAVELET_WINDOW * SampleSeries.SAMPLE_RATE);
     public static final float WAVELET_WINDOW = WAVELET_WINDOW_SAMPLES / SampleSeries.SAMPLE_RATE;
-    public static final float[] BIN_FREQUENCIES = makeBinFrequencies(BINS_PER_ROW, MIN_FREQUENCY, MAX_FREQUENCY);
 
     private static float[] makeBinFrequencies(int bins, float minFreq, float maxFreq)
     {
@@ -41,39 +40,26 @@ public class FrequencyTransformer {
 
     private long samplesProcessed = 0;
 
-    public float getTime() {
-        return (samplesProcessed - availableRows() * ROW_SAMPLES) / SampleSeries.SAMPLE_RATE;
-    }
-
     private boolean adaptiveNoiseReject = true;
     private boolean noiseFloorInited = false;
     private float[] noiseFloor = new float[BINS_PER_ROW];
     private float avgDev = 0.1f;
 
-    public int availableRows() {
-        return (lastBinRow + TOTAL_ROWS - firstBinRow) % TOTAL_ROWS;
+    public float getTime() {
+        return (samplesProcessed - getAvailableRows() * ROW_SAMPLES) / SampleSeries.SAMPLE_RATE;
     }
-    public float getBufferedTime() {
-        return availableRows() * ROW_TIME + (pendingSamples - consumedSamples) / SampleSeries.SAMPLE_RATE;
+
+    public int getAvailableRows() {
+        return (lastBinRow + TOTAL_ROWS - firstBinRow) % TOTAL_ROWS;
     }
 
     public FrequencyTransformer(boolean adaptiveNoiseReject, boolean zeroNoiseFloor)
     {
-        //SampleSeries s = new SampleSeries(WAVELET_WINDOW_SAMPLES);
         float[] waveletWindow = new float[WAVELET_WINDOW_SAMPLES];
         double windowK = 2d * Math.PI / WAVELET_WINDOW_SAMPLES;
         for(int i = 0; i < waveletWindow.length; ++i) {
             waveletWindow[i] = (float)(0.5d + 0.5d * Math.cos(windowK * (i - WAVELET_WINDOW_SAMPLES * 0.5f)));
         }
-
-        /*
-        System.arraycopy(waveletWindow, 0, s.getSamples(), 0, WAVELET_WINDOW_SAMPLES);
-        try {
-            s.writeToFile("waveletwindow.wav");
-        }
-        catch (Exception e) {
-        }
-        */
 
         for(int j = 0; j < BINS_PER_ROW; ++j) {
             float f = MIN_FREQUENCY + ((float)j / (BINS_PER_ROW - 1)) * (MAX_FREQUENCY - MIN_FREQUENCY);
@@ -82,30 +68,25 @@ public class FrequencyTransformer {
                 motherWavelets[j][0][i] = waveletWindow[i] * (float)Math.sin(phase) * 4f / WAVELET_WINDOW_SAMPLES;
                 motherWavelets[j][1][i] = waveletWindow[i] * (float)Math.cos(phase) * 4f / WAVELET_WINDOW_SAMPLES;
             }
-            /*
-            try {
-                System.arraycopy(motherWavelets, sinOffset, s.getSamples(), 0, WAVELET_WINDOW_SAMPLES);
-                s.writeToFile(String.format("sinwavelet%03d.wav", j));
-                System.arraycopy(motherWavelets, cosOffset, s.getSamples(), 0, WAVELET_WINDOW_SAMPLES);
-                s.writeToFile(String.format("coswavelet%03d.wav", j));
-            }
-            catch(Exception e) {
-            }
-            */
         }
         bins = new float[TOTAL_ROWS * BINS_PER_ROW];
 
+        float nf = (float)Math.log(1e-2f);
         this.adaptiveNoiseReject = adaptiveNoiseReject;
-        if(zeroNoiseFloor) {
+        if(!adaptiveNoiseReject || zeroNoiseFloor) {
+            for(int i = 0; i < noiseFloor.length; ++i) {
+                noiseFloor[i] = nf;
+            }
             noiseFloorInited = true;
         }
+        avgDev = (float)Math.log(0.707f) - nf;
     }
 
     public void warmup(SampleSeries samples) {
         addSamples(samples);
         samplesProcessed -= samples.size();
-        while(availableRows() > 0) {
-            discardRows(availableRows());
+        while(getAvailableRows() > 0) {
+            discardRows(getAvailableRows());
         }
     }
 
@@ -117,23 +98,28 @@ public class FrequencyTransformer {
         }
     }
 
-    public void getBinRows(float[] dest, int numRows)
-    {
-        if(numRows > availableRows()) {
-            throw new InvalidParameterException("numRows exceeds availableRows()");
+    public void getBinRows(float[] dest, int numRows) {
+        getBinRows(dest, 0, numRows);
+    }
+
+    public void getBinRows(float[] dest, int offset, int numRows) {
+        if(numRows > getAvailableRows()) {
+            throw new InvalidParameterException("numRows exceeds getAvailableRows()");
         }
         if(firstBinRow + numRows <= TOTAL_ROWS) {
-            System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, 0, numRows * BINS_PER_ROW);
+            System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, offset, numRows * BINS_PER_ROW);
         }
         else {
-            System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, 0, (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW);
-            System.arraycopy(bins, 0, dest, (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW, (firstBinRow + numRows - TOTAL_ROWS) * BINS_PER_ROW);
+            System.arraycopy(bins, firstBinRow * BINS_PER_ROW, dest, offset,
+                    (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW);
+            System.arraycopy(bins, 0, dest, offset + (TOTAL_ROWS - firstBinRow) * BINS_PER_ROW,
+                    (firstBinRow + numRows - TOTAL_ROWS) * BINS_PER_ROW);
         }
     }
 
     public void discardRows(int numRows) {
-        if(numRows > availableRows()) {
-            throw new InvalidParameterException("numRows exceeds availableRows()");
+        if(numRows > getAvailableRows()) {
+            throw new InvalidParameterException("numRows exceeds getAvailableRows()");
         }
         firstBinRow = (firstBinRow + numRows) % TOTAL_ROWS;
         tryConsumeSamples();
@@ -142,7 +128,7 @@ public class FrequencyTransformer {
     private void tryConsumeSamples()
     {
         float[] blockSamples = new float[WAVELET_WINDOW_SAMPLES];
-        while(((pendingSamples - consumedSamples) >= WAVELET_WINDOW_SAMPLES) && (availableRows() < (TOTAL_ROWS - 1))) {
+        while(((pendingSamples - consumedSamples) >= WAVELET_WINDOW_SAMPLES) && (getAvailableRows() < (TOTAL_ROWS - 1))) {
             makeContiguousSampleBlock(blockSamples);
             generateOneRowFromContiguousSampleBlock(blockSamples);
             lastBinRow = (lastBinRow + 1) % TOTAL_ROWS;
@@ -169,6 +155,8 @@ public class FrequencyTransformer {
         }
     }
 
+    private float[] rowScratch = new float[FrequencyTransformer.BINS_PER_ROW];
+
     private void generateOneRowFromContiguousSampleBlock(float[] blockSamples) {
         int offset = lastBinRow * BINS_PER_ROW;
 
@@ -179,35 +167,42 @@ public class FrequencyTransformer {
                 sinSum += blockSamples[i] * motherWavelets[j][0][i];
                 cosSum += blockSamples[i] * motherWavelets[j][1][i];
             }
-            bins[offset + j] = (float) Math.sqrt(sinSum * sinSum + cosSum * cosSum);
+            rowScratch[j] = (float) Math.log((float) Math.sqrt(sinSum * sinSum + cosSum * cosSum));
+            bins[offset + j] = (rowScratch[j] - noiseFloor[j]) / (avgDev * 4);
         }
         if(adaptiveNoiseReject) {
             if(!noiseFloorInited) {
-                for(int j = 0; j < BINS_PER_ROW; ++j) {
-                    noiseFloor[j] = bins[offset + j];
-                    avgDev = 0.1f;
-                }
-            }
-            float rowStdDev = 0f;
-            for(int j = 0; j < BINS_PER_ROW; ++j) {
-                float diff = bins[offset + j] - noiseFloor[j];
-                rowStdDev += diff * diff;
-            }
-            rowStdDev = (float)Math.sqrt(rowStdDev / BINS_PER_ROW);
-            avgDev = avgDev * (1f - 1f / 128f) + rowStdDev * 4f / 128f;
-            for(int j = 0; j < BINS_PER_ROW; ++j) {
-                float val = bins[offset + j];
-                bins[offset + j] = (val - noiseFloor[j]) / avgDev;
+                float rowStdDev = 0f;
+                float rowAvg = 0f;
 
-                if(val > noiseFloor[j]) {
-                    noiseFloor[j] *= (1f + 1f / 128f);
+                for(int j = 0; j < BINS_PER_ROW; ++j) {
+                    rowAvg += rowScratch[j];
                 }
-                else {
-                    noiseFloor[j] /= (1f + 1f / 128f);
+                rowAvg /= BINS_PER_ROW;
+                for(int j = 0; j < BINS_PER_ROW; ++j) {
+                    float diff = (rowScratch[j] - rowAvg);
+                    rowStdDev += diff * diff;
                 }
+                rowStdDev = (float)Math.sqrt(rowStdDev / BINS_PER_ROW);
+                for(int j = 0; j < BINS_PER_ROW; ++j) {
+                    noiseFloor[j] = rowAvg;
+                }
+                avgDev = rowStdDev;
+                noiseFloorInited = true;
+            }
+            else {
+                float rowStdDev = 0f;
+                for (int j = 0; j < BINS_PER_ROW; ++j) {
+                    float diff = rowScratch[j] - noiseFloor[j];
+                    rowStdDev += diff * diff;
+                }
+                rowStdDev = (float) Math.sqrt(rowStdDev / BINS_PER_ROW);
+                for (int j = 0; j < BINS_PER_ROW; ++j) {
+                    noiseFloor[j] = noiseFloor[j] * (1f - 1f / 128f) + rowScratch[j] * (1f / 128f);
+                }
+                avgDev = avgDev * (1f - 1f / 128f) + rowStdDev * 1f / 128f;
             }
         }
-        noiseFloorInited = true;
     }
 
     private void flushConsumedSamples() {

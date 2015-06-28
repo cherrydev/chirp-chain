@@ -35,7 +35,7 @@ public class RecognizerTestCase {
         public static ExpectedSymbol[] makePattern(CodeLibrary l, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
             ExpectedSymbol[] pattern = new ExpectedSymbol[sequence.length * repeatCount];
 
-            if(l.maxCodeRows() * FrequencyTransformer.ROW_TIME <= RECOGNIZE_WINDOW * 2f) {
+            if(l.getMaxCodeRows() * FrequencyTransformer.ROW_TIME <= RECOGNIZE_WINDOW * 2f) {
                 throw new Error("Code shorter than recognition window -- tests will be screwy!");
             }
 

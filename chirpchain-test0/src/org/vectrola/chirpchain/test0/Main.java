@@ -1,7 +1,6 @@
 package org.vectrola.chirpchain.test0;
 
 import java.io.IOException;
-import java.security.InvalidParameterException;
 
 /**
  * Created by jlunder on 5/16/15.
@@ -22,21 +21,6 @@ public class Main {
 
         SampleSeries hw = encodeString(l, "Hello world!");
         hw.writeToFile("helloworld.wav");
-
-        SampleSeries closeLoudChallenge = SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav");
-        SampleSeries easyChallenge = SampleSeries.readFromFile("chirpSamples/closeRange.wav");
-
-        FrequencyTransformer xf = new FrequencyTransformer(true, false);
-        // warm up adaptive noise rejection
-        xf.warmup(closeLoudChallenge);
-        xf.addSamples(closeLoudChallenge);
-        float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
-        for(int i = 0; i < 10; ++i) {
-            xf.getBinRows(bins, bins.length / FrequencyTransformer.BINS_PER_ROW);
-            //System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
-            //printHeatMap(bins, FrequencyTransformer.BINS_PER_ROW, i == 0, i == 9, null);
-            xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
-        }
 
         // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
         int[] sequence = new int[] {8, 4, 5, 6, 12, 6, 12, 6, 15, 6, 0, 2, 7, 7, 15, 6, 2, 7, 12, 6, 4, 6, 1, 2};
@@ -63,28 +47,75 @@ public class Main {
                     results.getMisrecognizedCount(), results.getSpuriousCount()));
         }
 
-        /*
-        System.out.print("Recognizing with SimilarSignalMaxRecognizer, close loud challenge:\n");
-        printQualityHeatMap(l, closeLoudChallenge, new SimilarSignalMaxRecognizer(l));
-        recognize(new SimilarSignalMaxRecognizer(l), closeLoudChallenge);
-        printQualityHeatMap(l, closeLoudChallenge, new TimeCorrelatingRecognizer(l));
-        recognize(new TimeCorrelatingRecognizer(l), closeLoudChallenge);
-        System.out.print("Recognizing with SimilarSignalMaxRecognizer, easy challenge:\n");
-        printQualityHeatMap(l, easyChallenge, new TimeCorrelatingRecognizer(l));
-        recognize(new TimeCorrelatingRecognizer(l), easyChallenge);
-        */
+        //printFingerprints(new TimeCorrelatingRecognizer(l));
+        //printFrequencyHeatMap(hw);
+        printFrequencyHeatMap(SampleSeries.readFromFile("chirpSamples/closeRange.wav"), true);
 
         System.out.println("Done.\n");
     }
 
+    private static void printFingerprints(CodeRecognizer rec) {
+        FrequencyTransformer ft = new FrequencyTransformer(false, false);
+        float[] heatMap = new float[rec.getLibrary().getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            CodeRecognizer.Fingerprint fp = rec.getFingerprintForSymbol(i);
+            int rows;
+            ft.flush();
+            ft.addSamples(fp.code);
+            rows = ft.getAvailableRows();
+            ft.getBinRows(heatMap, rows);
+            System.out.println(String.format("Symbol %d:", i));
+            printHeatMap(heatMap, rows, FrequencyTransformer.BINS_PER_ROW, false, true, true, new RowAnnotator() {
+                @Override
+                public int annotateChar(int row, int col, float[] bins, float value) {
+                    if (fp instanceof TimeCorrelatingRecognizer.Fingerprint) {
+                        TimeCorrelatingRecognizer.Fingerprint tcfp = (TimeCorrelatingRecognizer.Fingerprint) fp;
+                        for (int bin : tcfp.getPattern()[row]) {
+                            if (bin == row * FrequencyTransformer.BINS_PER_ROW + col) {
+                                return (int) '/';
+                            }
+                        }
+                    }
+                    return -1;
+                }
+            });
+            System.out.println();
+        }
+    }
+
+    private static void printFrequencyHeatMap(SampleSeries series, boolean adaptiveNoiseReject) {
+        int numRows = series.size() / FrequencyTransformer.ROW_SAMPLES;
+        FrequencyTransformer ft = new FrequencyTransformer(adaptiveNoiseReject, false);
+        float[] heatMap = new float[numRows * FrequencyTransformer.BINS_PER_ROW];
+        ft.warmup(series);
+        ft.addSamples(series);
+        int rowsTranscribed = 0;
+        while(rowsTranscribed < numRows) {
+            int rows = Math.min(numRows - rowsTranscribed, ft.getAvailableRows());
+            ft.getBinRows(heatMap, rowsTranscribed * FrequencyTransformer.BINS_PER_ROW, rows);
+            rowsTranscribed += rows;
+        }
+        printHeatMap(heatMap, numRows, FrequencyTransformer.BINS_PER_ROW, true, true, true, new RowAnnotator() {
+            public String annotateColBefore(int col, float[] bins) {
+                if(col < 0) {
+                    return "       ";
+                }
+                else {
+                    return String.format("%5.0f: ",
+                            FrequencyTransformer.MIN_FREQUENCY + col * FrequencyTransformer.BIN_BANDWIDTH);
+                }
+            }
+        });
+    }
+
     private static void printQualityHeatMap(CodeLibrary l, SampleSeries series, CodeRecognizer rec) {
         int numRows = (int)(series.size() / FrequencyTransformer.ROW_SAMPLES) -
-                l.maxCodeRows();
+                l.getMaxCodeRows();
         float[] heatMap = new float[numRows * CodeLibrary.NUM_SYMBOLS];
         rec.warmup(series);
         rec.process(series);
         rec.matchQualityGraph(heatMap);
-        printHeatMap(heatMap, CodeLibrary.NUM_SYMBOLS, true, true, new RowAnnotator() {
+        printHeatMap(heatMap, numRows, CodeLibrary.NUM_SYMBOLS, true, true, true, new RowAnnotator() {
             public String annotateColBefore(int col, float[] bins) {
                 if(col < 0) {
                     return "    ";
@@ -112,17 +143,6 @@ public class Main {
         System.out.println();
     }
 
-    private static void skipRows(FrequencyTransformer ft, int rowsToSkip) {
-        while(rowsToSkip > 0) {
-            int skipping = Math.min(rowsToSkip, ft.availableRows());
-            if(skipping == 0) {
-                throw new InvalidParameterException("rowsToSkip exceeds rows in input");
-            }
-            ft.discardRows(skipping);
-            rowsToSkip -= skipping;
-        }
-    }
-
     private static class RowAnnotator {
         public String annotateRowBefore(int row, float[] bins) {
             return "";
@@ -141,41 +161,76 @@ public class Main {
         }
     }
 
-    private static void printHeatMap(float[] data, int width, boolean topFrame, boolean bottomFrame, RowAnnotator annotator) {
+    private static void printHeatMap(float[] data, int rows, int cols, boolean transpose, boolean topFrame, boolean bottomFrame, RowAnnotator annotator) {
         char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
-        int length = data.length / width;
+
+        if(rows * cols > data.length) {
+            throw new Error("Data too small!");
+        }
 
         if(annotator == null) {
             annotator = new RowAnnotator();
         }
 
-        if(topFrame) {
-            System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
-            for (int i = 0; i < length; ++i) {
-                System.out.print("-");
-            }
-            System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
-        }
-
-        for(int i = 0; i < width; ++i) {
-            System.out.print(String.format("%s|", annotator.annotateColBefore(i, data)));
-            for(int j = 0; j < length; ++j) {
-                float val = data[j * width + i];
-                int c = annotator.annotateChar(j, i, data, val);
-                if(c < 0) {
-                    c = graphChars[Math.max(0, Math.min(graphChars.length - 1, (int) Math.floor(graphChars.length * val)))];
+        if(transpose) {
+            if (topFrame) {
+                System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
+                for (int i = 0; i < rows; ++i) {
+                    System.out.print("-");
                 }
-                System.out.print((char)c);
+                System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
             }
-            System.out.println(String.format("| %s", annotator.annotateColAfter(i, data)));
-        }
 
-        if(bottomFrame) {
-            System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
-            for (int i = 0; i < length; ++i) {
-                System.out.print("-");
+            for (int i = 0; i < cols; ++i) {
+                System.out.print(String.format("%s|", annotator.annotateColBefore(i, data)));
+                for (int j = 0; j < rows; ++j) {
+                    float val = data[j * cols + i];
+                    int c = annotator.annotateChar(j, i, data, val);
+                    if (c < 0) {
+                        c = graphChars[Math.max(0, Math.min(graphChars.length - 1, (int) Math.floor(graphChars.length * val)))];
+                    }
+                    System.out.print((char) c);
+                }
+                System.out.println(String.format("|%s", annotator.annotateColAfter(i, data)));
             }
-            System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
+
+            if (bottomFrame) {
+                System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
+                for (int i = 0; i < rows; ++i) {
+                    System.out.print("-");
+                }
+                System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
+            }
+        }
+        else {
+            if (topFrame) {
+                System.out.print(String.format("%s+", annotator.annotateRowBefore(-1, data)));
+                for (int i = 0; i < cols; ++i) {
+                    System.out.print("-");
+                }
+                System.out.println(String.format("+%s", annotator.annotateRowAfter(-1, data)));
+            }
+
+            for (int j = 0; j < rows; ++j) {
+                System.out.print(String.format("%s|", annotator.annotateRowBefore(j, data)));
+                for (int i = 0; i < cols; ++i) {
+                    float val = data[j * cols + i];
+                    int c = annotator.annotateChar(j, i, data, val);
+                    if (c < 0) {
+                        c = graphChars[Math.max(0, Math.min(graphChars.length - 1, (int) Math.floor(graphChars.length * val)))];
+                    }
+                    System.out.print((char) c);
+                }
+                System.out.println(String.format("|%s", annotator.annotateRowAfter(j, data)));
+            }
+
+            if (bottomFrame) {
+                System.out.print(String.format("%s+", annotator.annotateRowBefore(-1, data)));
+                for (int i = 0; i < cols; ++i) {
+                    System.out.print("-");
+                }
+                System.out.println(String.format("+%s", annotator.annotateRowAfter(-1, data)));
+            }
         }
     }
 

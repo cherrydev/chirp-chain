@@ -1,7 +1,5 @@
 package org.vectrola.chirpchain.test0;
 
-import com.sun.org.apache.bcel.internal.classfile.Code;
-
 /**
  * Created by jlunder on 6/10/15.
  */
@@ -52,6 +50,10 @@ public abstract class CodeRecognizer {
     private float matchBaseThreshold;
     private float matchBestToSecondBestThreshold;
 
+    public CodeLibrary getLibrary() {
+        return library;
+    }
+
     public CodeRecognizer(CodeLibrary library, float matchBaseThreshold, float matchBestToSecondBestThreshold) {
         this.library = library;
         this.codeFingerprints = new Fingerprint[CodeLibrary.NUM_SYMBOLS];
@@ -75,9 +77,9 @@ public abstract class CodeRecognizer {
 
     public boolean matchQualityGraph(float[] results) {
         int resultRows = results.length / CodeLibrary.NUM_SYMBOLS;
-        float bins[] = new float[library.maxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        float bins[] = new float[library.getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
         for(int i = 0; i < resultRows; ++i) {
-            frequencyTransformer.getBinRows(bins, library.maxCodeRows());
+            frequencyTransformer.getBinRows(bins, library.getMaxCodeRows());
             for(int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
                 results[i * CodeLibrary.NUM_SYMBOLS + j] = matchQuality(getFingerprintForSymbol(j), bins);
             }
@@ -121,7 +123,7 @@ public abstract class CodeRecognizer {
             }
             else {
                 ++rowsSinceSymbolDetected;
-                if(rowsSinceSymbolDetected > library.maxCodeRows()) {
+                if(rowsSinceSymbolDetected > library.getMaxCodeRows()) {
                     hasNextSymbol = true;
                     rowsSinceSymbolDetected = 0;
                     nextSymbol = -1; // break
@@ -132,15 +134,15 @@ public abstract class CodeRecognizer {
     }
 
     protected boolean canMatch() {
-        return frequencyTransformer.availableRows() >= library.maxCodeRows();
+        return frequencyTransformer.getAvailableRows() >= library.getMaxCodeRows();
     }
 
     protected int tryFindMatch() {
-        float[] inputBinRows = new float[library.maxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        float[] inputBinRows = new float[library.getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
         int bestSym = -1;
         float bestQ = 0f;
         float secondQ = 0f;
-        frequencyTransformer.getBinRows(inputBinRows, library.maxCodeRows());
+        frequencyTransformer.getBinRows(inputBinRows, library.getMaxCodeRows());
 
         for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             Fingerprint fp = getFingerprintForSymbol(i);
