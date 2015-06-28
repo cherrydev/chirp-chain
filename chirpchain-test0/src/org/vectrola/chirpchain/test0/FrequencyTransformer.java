@@ -7,16 +7,19 @@ import java.util.Vector;
  * Created by jlunder on 6/10/15.
  */
 public class FrequencyTransformer {
-    public static final float TIME_WINDOW = 1f;
-    public static final float ROW_TIME = 0.005f;
-    public static final int ROW_SAMPLES = (int)Math.ceil(ROW_TIME * SampleSeries.SAMPLE_RATE);
+    private static final float DESIRED_TIME_WINDOW = 1f;
+    private static final float DESIRED_ROW_TIME = 0.01f;
+    private static final float DESIRED_WAVELET_WINDOW = DESIRED_ROW_TIME * 2;
+    public static final int ROW_SAMPLES = (int)Math.rint(DESIRED_ROW_TIME * SampleSeries.SAMPLE_RATE);
+    public static final float ROW_TIME = ROW_SAMPLES / SampleSeries.SAMPLE_RATE;
+    public static final int TOTAL_ROWS = (int) Math.ceil(DESIRED_TIME_WINDOW / ROW_TIME);
+    public static final float TIME_WINDOW = TOTAL_ROWS * ROW_TIME;
     public static final float MIN_FREQUENCY = 1000f;
     public static final float MAX_FREQUENCY = 6000f;
     public static final float BIN_BANDWIDTH = 50f;
     public static final int BINS_PER_ROW = (int)((MAX_FREQUENCY - MIN_FREQUENCY) / BIN_BANDWIDTH) + 1;
-    public static final int TOTAL_ROWS = (int) Math.ceil(TIME_WINDOW / ROW_TIME);
-    public static final float WAVELET_WINDOW = ROW_TIME * 4;
-    public static final int WAVELET_WINDOW_SAMPLES = (int)Math.ceil(WAVELET_WINDOW * SampleSeries.SAMPLE_RATE);
+    public static final int WAVELET_WINDOW_SAMPLES = (int)Math.rint(DESIRED_WAVELET_WINDOW * SampleSeries.SAMPLE_RATE);
+    public static final float WAVELET_WINDOW = WAVELET_WINDOW_SAMPLES / SampleSeries.SAMPLE_RATE;
     public static final float[] BIN_FREQUENCIES = makeBinFrequencies(BINS_PER_ROW, MIN_FREQUENCY, MAX_FREQUENCY);
 
     private static float[] makeBinFrequencies(int bins, float minFreq, float maxFreq)
@@ -36,6 +39,12 @@ public class FrequencyTransformer {
     private int consumedSamples = 0;
     private int pendingSamples = 0;
 
+    private long samplesProcessed = 0;
+
+    public float getTime() {
+        return (samplesProcessed - availableRows() * ROW_SAMPLES) / SampleSeries.SAMPLE_RATE;
+    }
+
     private boolean adaptiveNoiseReject = true;
     private boolean noiseFloorInited = false;
     private float[] noiseFloor = new float[BINS_PER_ROW];
@@ -43,6 +52,9 @@ public class FrequencyTransformer {
 
     public int availableRows() {
         return (lastBinRow + TOTAL_ROWS - firstBinRow) % TOTAL_ROWS;
+    }
+    public float getBufferedTime() {
+        return availableRows() * ROW_TIME + (pendingSamples - consumedSamples) / SampleSeries.SAMPLE_RATE;
     }
 
     public FrequencyTransformer(boolean adaptiveNoiseReject, boolean zeroNoiseFloor)
@@ -89,6 +101,14 @@ public class FrequencyTransformer {
         }
     }
 
+    public void warmup(SampleSeries samples) {
+        addSamples(samples);
+        samplesProcessed -= samples.size();
+        while(availableRows() > 0) {
+            discardRows(availableRows());
+        }
+    }
+
     public void addSamples(SampleSeries samples) {
         if(samples.size() > 0) {
             sampleBuffer.add(samples);
@@ -128,6 +148,8 @@ public class FrequencyTransformer {
             lastBinRow = (lastBinRow + 1) % TOTAL_ROWS;
             consumedSamples += ROW_SAMPLES;
             flushConsumedSamples();
+
+            samplesProcessed += ROW_SAMPLES;
         }
     }
 

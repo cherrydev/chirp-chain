@@ -8,40 +8,6 @@ import java.security.InvalidParameterException;
  */
 public class Main {
     public static void main(String[] args) throws IOException {
-        /*
-        SampleSeries s = new SampleSeries((int)(SampleSeries.SAMPLE_RATE * 0.15f));
-        for(int i = 0; i < s.size() / 2; ++i) {
-            float t = ((float)i / SampleSeries.SAMPLE_RATE);
-            float sample = (float)Math.sin(2f * (float)Math.PI * (2000f * t + (1000f / 0.075f) * 0.5f * t * t));
-            s.setSample(i, sample);
-            s.setSample(s.size() - 1 - i, sample);
-        }
-        FrequencyTransformer fingerprintFT = new FrequencyTransformer();
-        for(int i = 0; i < 30; ++i) {
-            fingerprintFT.addSamples(s);
-        }
-        System.out.println(String.format("Frequency transformer test (%d rows):", fingerprintFT.availableRows()));
-        char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
-        int rowCount = 0;
-        while(fingerprintFT.availableRows() > 0) {
-            float[] bins = new float[FrequencyTransformer.BINS_PER_ROW * 3];
-            int rows = Math.min(fingerprintFT.availableRows(), 3);
-            fingerprintFT.getBinRows(bins, rows);
-            for (int j = 0; j < rows; ++j) {
-                System.out.print('|');
-                for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                    char c = graphChars[Math.max(0, Math.min(graphChars.length - 1, (int) Math.floor(graphChars.length * bins[j * FrequencyTransformer.BINS_PER_ROW + i])))];
-                    System.out.print(c);
-                }
-                System.out.println(String.format("| %d", rowCount++));
-            }
-            fingerprintFT.discardRows(rows);
-        }
-        System.out.println();
-
-        System.exit(0);
-        */
-
         System.out.print("Generating code library\n");
 
         CodeLibrary l = CodeLibrary.makeChirpCodes();
@@ -50,105 +16,19 @@ public class Main {
         }
 
 
-        /*
-        System.out.print("Fingerprinting library\n");
-
-        PeakListRecognizer cr = new PeakListRecognizer(l);
-
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            //System.out.println(String.format("Fingerprint for symbol %d:", symbol));
-            //printFingerprint(cr, i);
-        }
-        */
-
-
-        /*
-        System.out.println("Correlation");
-        System.out.print("   ");
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            System.out.print(String.format("  %5d", i));
-        }
-        System.out.println();
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            System.out.print(String.format("%2d:", i));
-            for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
-                float cc = CodeRecognizer.correlation(cr.getFingerprintForSymbol(i).getBins(), 0.25f,
-                        cr.getFingerprintForSymbol(j).getBins(),
-                        CodeRecognizer.mean(cr.getFingerprintForSymbol(j).getBins()));
-                System.out.print(String.format("  %5.2f", cc));
-            }
-            System.out.println();
-        }
-        */
-
-
-
-
-        /*
-        System.out.println("Match quality");
-        System.out.print("   ");
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            System.out.print(String.format("  %5d", i));
-        }
-        System.out.println();
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            System.out.print(String.format("%2d:", i));
-            float[] inputPeaks = new float[cr.getFingerprintForSymbol(i).getMatchRows()];
-            PeakListRecognizer.findPeaksInput(((PeakListRecognizer.Fingerprint)cr.getFingerprintForSymbol(i)).getBins(), inputPeaks);
-            for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
-                float q = PeakListRecognizer.matchQuality(((PeakListRecognizer.Fingerprint)cr.getFingerprintForSymbol(j)).getPeaks(), inputPeaks);
-                System.out.print(String.format("  %5.2f", q));
-            }
-            System.out.println();
-        }
-        */
-
         SampleSeries challenge = SampleSeries.readFromFile("helloworld-challenge.wav");
-
-        /*
-        BinPatternRecognizer bpr = new BinPatternRecognizer(l);
-
-        printFingerprint((BinPatternRecognizer.Fingerprint)bpr.getFingerprintForSymbol(8));
-        FrequencyTransformer xf = new FrequencyTransformer(false);
-        xf.addSamples(challenge);
-        skipRows(xf, (int)(9.1000f / FrequencyTransformer.ROW_TIME));
-        float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
-        for(int i = 0; i < 1; ++i) {
-            xf.getBinRows(bins, bins.length / FrequencyTransformer.BINS_PER_ROW);
-            System.out.println(i * (bins.length / FrequencyTransformer.BINS_PER_ROW) * FrequencyTransformer.ROW_TIME);
-            printNormalizedBinRows(bins, null);
-            xf.discardRows(bins.length / FrequencyTransformer.BINS_PER_ROW);
-        }
-        */
-
-
 
         System.out.print("Encoding string\n");
 
         SampleSeries hw = encodeString(l, "Hello world!");
         hw.writeToFile("helloworld.wav");
 
-        /*
-        for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            BinPatternRecognizer.BinPatternFingerprint fp =
-                    (BinPatternRecognizer.Fingerprint)bpr.getFingerprintForSymbol(i);
-            float ex = PeakListRecognizer.mean(fp.getBins());
-            float mx = PeakListRecognizer.max(fp.getBins(), 0, fp.getBins().length);
-
-            float q = BinPatternRecognizer.matchQuality(fp.getBinPattern(), fp.getBins(), mx * 0.5f + ex * 0.5f);
-            System.out.println(String.format("self-q for %d: %.4f", i, q));
-        }
-        */
-
         SampleSeries closeLoudChallenge = SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav");
         SampleSeries easyChallenge = SampleSeries.readFromFile("chirpSamples/closeRange.wav");
 
         FrequencyTransformer xf = new FrequencyTransformer(true, false);
         // warm up adaptive noise rejection
-        xf.addSamples(closeLoudChallenge);
-        while(xf.availableRows() > 0) {
-            xf.discardRows(xf.availableRows());
-        }
+        xf.warmup(closeLoudChallenge);
         xf.addSamples(closeLoudChallenge);
         float[] bins = new float[xf.availableRows() * FrequencyTransformer.BINS_PER_ROW];
         for(int i = 0; i < 10; ++i) {
@@ -159,24 +39,47 @@ public class Main {
         }
 
         // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
+        int[] sequence = new int[] {8, 4, 5, 6, 12, 6, 12, 6, 15, 6, 0, 2, 7, 7, 15, 6, 2, 7, 12, 6, 4, 6, 1, 2};
+        RecognizerTestCase[] testCases = new RecognizerTestCase[] {
+                new RecognizerTestCase("clean", l, hw, sequence, 0.000f, 10f, 1),
+                new RecognizerTestCase("close loud", l, SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav"),
+                        sequence, 5.190f, 10f, 5),
+                new RecognizerTestCase("close soft", l, SampleSeries.readFromFile("chirpSamples/cone-close-soft.wav"),
+                        sequence, 2.465f, 10f, 5),
+                new RecognizerTestCase("far loud", l, SampleSeries.readFromFile("chirpSamples/cone-loud.wav"),
+                        sequence, 3.420f, 10f, 6),
+                new RecognizerTestCase("far soft", l, SampleSeries.readFromFile("chirpSamples/cone-soft.wav"),
+                        sequence, 2.210f, 10f, 6),
+                new RecognizerTestCase("table", l, SampleSeries.readFromFile("chirpSamples/closeRange.wav"),
+                        sequence, 4.270f, 10f, 2),
+        };
 
-        System.out.print("Recognizing with SimilarSignalMaxRecognizer, hw:\n");
-        printQualityHeatMap(l, hw, new SimilarSignalMaxRecognizer(l));
-        printQualityHeatMap(l, hw, new TimeCorrelatingRecognizer(l));
-        recognize(new SimilarSignalMaxRecognizer(l), hw);
-        recognize(new TimeCorrelatingRecognizer(l), hw);
+        System.out.println("Running tests!");
+        for(RecognizerTestCase testCase: testCases) {
+            RecognizerTestCase.Results results = testCase.testRecognizer(new TimeCorrelatingRecognizer(l));
+            System.out.println(String.format(
+                    "Testing %20s: %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious",
+                    testCase.getName(), results.getRecognizedCount(), results.getUnrecognizedCount(),
+                    results.getMisrecognizedCount(), results.getSpuriousCount()));
+        }
 
+        /*
         System.out.print("Recognizing with SimilarSignalMaxRecognizer, close loud challenge:\n");
+        printQualityHeatMap(l, closeLoudChallenge, new SimilarSignalMaxRecognizer(l));
         recognize(new SimilarSignalMaxRecognizer(l), closeLoudChallenge);
+        printQualityHeatMap(l, closeLoudChallenge, new TimeCorrelatingRecognizer(l));
+        recognize(new TimeCorrelatingRecognizer(l), closeLoudChallenge);
         System.out.print("Recognizing with SimilarSignalMaxRecognizer, easy challenge:\n");
-        recognize(new SimilarSignalMaxRecognizer(l), easyChallenge);
+        printQualityHeatMap(l, easyChallenge, new TimeCorrelatingRecognizer(l));
+        recognize(new TimeCorrelatingRecognizer(l), easyChallenge);
+        */
 
-        System.out.print("Done.\n");
+        System.out.println("Done.\n");
     }
 
     private static void printQualityHeatMap(CodeLibrary l, SampleSeries series, CodeRecognizer rec) {
-        int numRows = (int)(series.size() / (FrequencyTransformer.ROW_TIME * SampleSeries.SAMPLE_RATE)) -
-                l.maxCodeRows() - (int)Math.ceil(FrequencyTransformer.WAVELET_WINDOW / FrequencyTransformer.ROW_TIME);
+        int numRows = (int)(series.size() / FrequencyTransformer.ROW_SAMPLES) -
+                l.maxCodeRows();
         float[] heatMap = new float[numRows * CodeLibrary.NUM_SYMBOLS];
         rec.warmup(series);
         rec.process(series);
@@ -192,6 +95,7 @@ public class Main {
             }
         });
     }
+
 
     private static void recognize(CodeRecognizer r, SampleSeries series)
     {

@@ -38,7 +38,7 @@ public class SimilarSignalMaxRecognizer extends CodeRecognizer {
     }
 
     SimilarSignalMaxRecognizer(CodeLibrary library) {
-        super(library);
+        super(library, 0.6f, 0.3f);
         fingerprintLibrary();
     }
 
@@ -48,34 +48,6 @@ public class SimilarSignalMaxRecognizer extends CodeRecognizer {
             codeFingerprints[i] = new Fingerprint(code);
         }
     }
-
-    public int tryFindMatch() {
-        float[] inputBinRows = new float[library.maxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
-        int bestSym = -1;
-        float bestQ = 0f;
-        float secondQ = 0f;
-        frequencyTransformer.getBinRows(inputBinRows, library.maxCodeRows());
-
-        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            Fingerprint fp = (Fingerprint)getFingerprintForSymbol(i);
-            float q = matchQuality(fp, inputBinRows);
-            if (q > bestQ) {
-                secondQ = bestQ;
-                bestQ = q;
-                bestSym = i;
-            }
-        }
-
-        //System.out.print(String.format("R b %.4f s %.4f ", bestQ, secondQ));
-        if ((bestQ > 0.6f) && ((secondQ / bestQ) < 0.3f)) {
-            //System.out.print("Y!");
-            return bestSym;
-        } else {
-            //System.out.println("n.");
-            return -1;
-        }
-    }
-
 
     public float matchQuality(CodeRecognizer.Fingerprint genericFp, float[] inputBinRows) {
         Fingerprint fp = (Fingerprint)genericFp;
@@ -108,24 +80,5 @@ public class SimilarSignalMaxRecognizer extends CodeRecognizer {
             return 1.0f / (1.0f + stdDevOfMeans / meanOfMeans);
         }
         return 0f;
-    }
-
-
-    public static float max(float[] values) {
-        float maxValue = values[0];
-        for (int i = 0; i < values.length; ++i) {
-            maxValue = Math.max(maxValue, values[i]);
-        }
-        return maxValue;
-    }
-
-    public static float mean(float[] vals) {
-        float sum = 0f;
-
-        for (int i = 0; i < vals.length; ++i) {
-            sum += vals[i];
-        }
-
-        return sum / vals.length;
     }
 }
