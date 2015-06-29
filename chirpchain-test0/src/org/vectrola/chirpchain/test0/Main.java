@@ -46,7 +46,7 @@ public class Main {
 
         System.out.println("Running tests!");
         for(RecognizerTestCase testCase: testCases) {
-            RecognizerTestCase.Results results = testCase.testRecognizer(new TimeCorrelatingRecognizer(l));
+            RecognizerTestCase.Results results = testCase.testRecognizer(new CorrelationRecognizer(l));
             System.out.println(String.format(
                     "Testing %20s: %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious",
                     testCase.getName(), results.getRecognizedCount(), results.getUnrecognizedCount(),
@@ -55,8 +55,8 @@ public class Main {
 
         //printFingerprints(new TimeCorrelatingRecognizer(l));
         //printTestFrequencyHeatMap(closeLoudTestCase, new TimeCorrelatingRecognizer(l));
-        //printFrequencyHeatMap(cleanTestCase.getTestSeries(), true);
-        //printQualityHeatMap(cleanTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
+        printFrequencyHeatMap(cleanTestCase.getTestSeries(), true);
+        printQualityHeatMap(cleanTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
 
         System.out.println("Done.\n");
     }

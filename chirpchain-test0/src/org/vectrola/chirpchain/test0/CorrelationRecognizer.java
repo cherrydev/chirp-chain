@@ -2,7 +2,7 @@ package org.vectrola.chirpchain.test0;
 
 public class CorrelationRecognizer extends CodeRecognizer {
     CorrelationRecognizer(CodeLibrary library) {
-        super(library, 0.5f, 0.1f);
+        super(library, 0.25f, 0.3f);
     }
 
     public float matchQuality(CodeRecognizer.Fingerprint fp, float[] inputBins) {
@@ -49,8 +49,8 @@ public class CorrelationRecognizer extends CodeRecognizer {
         }
         inputDev = (float) Math.sqrt(inputDev / fpBins.length);
         fpDev = (float) Math.sqrt(fpDev / fpBins.length);
-        p = (float) Math.sqrt(p / fpBins.length) / (inputDev * fpDev);
+        p = (float) p / (fpBins.length * inputDev * fpDev);
 
-        return p;
+        return Math.max(p, 0f);
     }
 }
