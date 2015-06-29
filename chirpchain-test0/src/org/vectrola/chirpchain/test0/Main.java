@@ -1,6 +1,9 @@
 package org.vectrola.chirpchain.test0;
 
+import com.sun.xml.internal.rngom.digested.DDataPattern;
+
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * Created by jlunder on 5/16/15.
@@ -46,7 +49,8 @@ public class Main {
 
         System.out.println("Running tests!");
         for(RecognizerTestCase testCase: testCases) {
-            RecognizerTestCase.Results results = testCase.testRecognizer(new CorrelationRecognizer(l));
+            RecognizerTestCase.Results results =
+                    testCase.testRecognizer(new TimeCorrelatingRecognizer(l, testCase.getFrequencyTransformer()));
             System.out.println(String.format(
                     "Testing %20s: %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious",
                     testCase.getName(), results.getRecognizedCount(), results.getUnrecognizedCount(),
@@ -55,19 +59,61 @@ public class Main {
 
         //printFingerprints(new TimeCorrelatingRecognizer(l));
         //printTestFrequencyHeatMap(closeLoudTestCase, new TimeCorrelatingRecognizer(l));
-        printFrequencyHeatMap(cleanTestCase.getTestSeries(), true);
-        printQualityHeatMap(cleanTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
+        printFrequencyHeatMap(cleanTestCase.getFrequencyTransformer(), true);
+        cleanTestCase.getFrequencyTransformer().reset();
+        printQualityHeatMap(new TimeCorrelatingRecognizer(l, cleanTestCase.getFrequencyTransformer()));
+        cleanTestCase.getFrequencyTransformer().reset();
 
         System.out.println("Done.\n");
     }
 
+    private static class Parameters {
+        private static final float ROW_THRESHOLD_MIN = 0.0001f;
+        private static final float ROW_THRESHOLD_MAX = 1f;
+        private static final float BIN_MINIMUM_MIN = (float)Math.log(1e-5f);
+        private static final float BIN_MINIMUM_MAX = 1.0f;
+        private static final float ZONE_THRESHOLD_MIN = 0.5f;
+        private static final float ZONE_THRESHOLD_MAX = 0.5f;
+        private static final int ZONE_COUNT_MIN = 1;
+        private static final int ZONE_COUNT_MAX = 16;
+        private static final int ZONE_COUNT_THRESHOLD_MIN = 1;
+        private static final int ZONE_COUNT_THRESHOLD_MAX = 16;
+        private static final float MATCH_BASE_THRESHOLD_MIN = 0f;
+        private static final float MATCH_BASE_THRESHOLD_MAX = 1f;
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MIN = 1e-3f;
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MAX = 1f;
+
+        public float rowThreshold;
+        public float binMinimum;
+        public float zoneThreshold;
+        public int zoneCount;
+        public int zoneCountThreshold;
+        public float matchBaseThreshold;
+        public float matchBestToSecondBestThreshold;
+
+        public static Parameters makeRandom(Random r) {
+            return new Parameters();
+        }
+
+        public Parameters mutate(Random r, float distance) {
+            return new Parameters();
+        }
+
+        public Parameters combine(Random r, Parameters other) {
+            return new Parameters();
+        }
+    }
+
+    private static void autoTune() {
+    }
+
     private static void printFingerprints(CodeRecognizer rec) {
-        FrequencyTransformer ft = new FrequencyTransformer(false, false);
+        LiveFrequencyTransformer ft = new LiveFrequencyTransformer(false, false);
         float[] heatMap = new float[rec.getLibrary().getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
             CodeRecognizer.Fingerprint fp = rec.getFingerprintForSymbol(i);
             int rows;
-            ft.flush();
+            ft.reset();
             ft.addSamples(fp.code);
             rows = ft.getAvailableRows();
             ft.getBinRows(heatMap, rows);
@@ -118,12 +164,9 @@ public class Main {
         });
     }
 
-    private static void printFrequencyHeatMap(SampleSeries series, boolean adaptiveNoiseReject) {
-        int numRows = series.size() / FrequencyTransformer.ROW_SAMPLES;
-        FrequencyTransformer ft = new FrequencyTransformer(adaptiveNoiseReject, false);
+    private static void printFrequencyHeatMap(FrequencyTransformer ft, boolean adaptiveNoiseReject) {
+        int numRows = ft.getQueuedRows();
         float[] heatMap = new float[numRows * FrequencyTransformer.BINS_PER_ROW];
-        ft.warmup(series);
-        ft.addSamples(series);
         int rowsTranscribed = 0;
         while(rowsTranscribed < numRows) {
             int rows = Math.min(numRows - rowsTranscribed, ft.getAvailableRows());
@@ -144,10 +187,9 @@ public class Main {
         });
     }
 
-    private static void printQualityHeatMap(SampleSeries series, CodeRecognizer rec) {
+    private static void printQualityHeatMap(CodeRecognizer rec) {
         CodeLibrary l = rec.getLibrary();
-        int numRows = (int)(series.size() / FrequencyTransformer.ROW_SAMPLES) -
-                l.getMaxCodeRows();
+        int numRows = rec.getFrequencyTransformer().getQueuedRows() - rec.getLibrary().getMaxCodeRows();
         float[] heatMap = new float[numRows * CodeLibrary.NUM_SYMBOLS];
         float mx = heatMap[0];
         float mn = heatMap[0];
@@ -158,8 +200,6 @@ public class Main {
         for(int i = 0; i < heatMap.length; ++i) {
             heatMap[i] = (heatMap[i] - mn) / (mx - mn);
         }
-        rec.warmup(series);
-        rec.process(series);
         rec.matchQualityGraph(heatMap);
         printHeatMap(heatMap, numRows, CodeLibrary.NUM_SYMBOLS, true, true, true, new RowAnnotator() {
             public String annotateColBefore(int col, float[] bins) {

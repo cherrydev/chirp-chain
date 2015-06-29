@@ -79,6 +79,7 @@ public class RecognizerTestCase {
 
     private boolean log = false;
     private String name;
+    private FrequencyTransformer frequencyTransformer;
     private SampleSeries testSeries;
     private ExpectedSymbol[] expectedSymbols;
 
@@ -98,6 +99,10 @@ public class RecognizerTestCase {
         return testSeries;
     }
 
+    public FrequencyTransformer getFrequencyTransformer() {
+        return frequencyTransformer;
+    }
+
     public ExpectedSymbol[] getExpectedSymbols() {
         return expectedSymbols;
     }
@@ -105,6 +110,7 @@ public class RecognizerTestCase {
     public RecognizerTestCase(String name, CodeLibrary l, SampleSeries testSeries, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
         this.name = name;
         this.testSeries = testSeries;
+        this.frequencyTransformer = new MockFrequencyTransformer(testSeries);
         this.expectedSymbols = ExpectedSymbol.makePattern(l, sequence, startTime, repeatPeriod, repeatCount);
     }
 
@@ -117,8 +123,10 @@ public class RecognizerTestCase {
         int i = 0;
         boolean misrecognizedThis = false;
 
-        recognizer.warmup(testSeries);
-        recognizer.process(testSeries);
+        if(recognizer.getFrequencyTransformer() != frequencyTransformer) {
+            throw new IllegalArgumentException("Recognizer must be using the test case's FrequencyTransformer");
+        }
+
         if (log) {
             System.out.print("Expecting:");
             for (ExpectedSymbol es : expectedSymbols) {
@@ -163,6 +171,7 @@ public class RecognizerTestCase {
             System.out.println();
         }
         unrecognizedCount += expectedSymbols.length - i;
+        frequencyTransformer.reset();
 
         return new Results(recognizedCount, unrecognizedCount, misrecognizedCount, spuriousCount);
     }

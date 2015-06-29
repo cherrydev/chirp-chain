@@ -218,7 +218,7 @@ public class CodeLibrary {
         }
 
         private float getSelfMatchQ() {
-            FrequencyTransformer ft = new FrequencyTransformer(false, true);
+            LiveFrequencyTransformer ft = new LiveFrequencyTransformer(false, true);
             ft.addSamples(new SampleSeries(FrequencyTransformer.ROW_SAMPLES / 2));
             ft.addSamples(code);
             float[] offsetInputBins = new float[ft.getAvailableRows() * FrequencyTransformer.BINS_PER_ROW];

@@ -5,7 +5,7 @@ package org.vectrola.chirpchain.test0;
  */
 public abstract class CodeRecognizer {
     public static class Fingerprint {
-        protected static final FrequencyTransformer fingerprintFT = new FrequencyTransformer(false, true);
+        protected static final LiveFrequencyTransformer fingerprintFT = new LiveFrequencyTransformer(false, true);
         protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
 
         protected SampleSeries code;
@@ -35,7 +35,7 @@ public abstract class CodeRecognizer {
             int fingerprintRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
 
             synchronized (fingerprintFT) {
-                fingerprintFT.flush();
+                fingerprintFT.reset();
                 fingerprintFT.addSamples(code);
                 fingerprintFT.addSamples(pad);
 
@@ -68,9 +68,9 @@ public abstract class CodeRecognizer {
         }
     }
 
-    protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer(true, false);
     protected CodeLibrary library;
     protected Fingerprint[] codeFingerprints;
+    protected FrequencyTransformer frequencyTransformer;
 
     private boolean hasNextSymbol;
     private int nextSymbol;
@@ -84,12 +84,17 @@ public abstract class CodeRecognizer {
         return library;
     }
 
+    public FrequencyTransformer getFrequencyTransformer() {
+        return frequencyTransformer;
+    }
+
     public Fingerprint getFingerprintForSymbol(int symbol) {
         return codeFingerprints[symbol];
     }
 
-    public CodeRecognizer(CodeLibrary library, float matchBaseThreshold, float matchBestToSecondBestThreshold) {
+    public CodeRecognizer(CodeLibrary library, FrequencyTransformer frequencyTransformer, float matchBaseThreshold, float matchBestToSecondBestThreshold) {
         this.library = library;
+        this.frequencyTransformer = frequencyTransformer;
         this.codeFingerprints = new Fingerprint[CodeLibrary.NUM_SYMBOLS];
         this.matchBaseThreshold = matchBaseThreshold;
         this.matchBestToSecondBestThreshold = matchBestToSecondBestThreshold;
@@ -102,15 +107,6 @@ public abstract class CodeRecognizer {
             SampleSeries code = library.getCodeForSymbol(i);
             codeFingerprints[i] = new Fingerprint(code);
         }
-    }
-
-    public void warmup(SampleSeries samples) {
-        frequencyTransformer.warmup(samples);
-        hasNextSymbol = false;
-    }
-
-    public void process(SampleSeries samples) {
-        frequencyTransformer.addSamples(samples);
     }
 
     public boolean matchQualityGraph(float[] results) {
