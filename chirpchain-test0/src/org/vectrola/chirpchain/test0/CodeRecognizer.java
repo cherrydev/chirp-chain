@@ -10,7 +10,8 @@ public abstract class CodeRecognizer {
 
         protected SampleSeries code;
         protected float[] bins;
-        private int[][] pattern;
+        protected int[][] pattern;
+        protected float mean;
 
         public float[] getBins() {
             return bins;
@@ -22,6 +23,10 @@ public abstract class CodeRecognizer {
 
         public int getMatchRows() {
             return pattern.length;
+        }
+
+        public float getMean() {
+            return mean;
         }
 
         public Fingerprint(SampleSeries code) {
@@ -38,6 +43,7 @@ public abstract class CodeRecognizer {
                 fingerprintFT.getBinRows(bins, fingerprintRows);
             }
 
+            mean = CodeRecognizer.mean(bins);
             makePattern();
         }
 
