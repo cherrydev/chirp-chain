@@ -10,10 +10,21 @@ public class RecognizerTestCase {
         private int misrecognizedCount;
         private int spuriousCount;
 
-        public int getRecognizedCount() { return recognizedCount; }
-        public int getUnrecognizedCount() { return unrecognizedCount; }
-        public int getMisrecognizedCount() { return misrecognizedCount; }
-        public int getSpuriousCount() { return spuriousCount; }
+        public int getRecognizedCount() {
+            return recognizedCount;
+        }
+
+        public int getUnrecognizedCount() {
+            return unrecognizedCount;
+        }
+
+        public int getMisrecognizedCount() {
+            return misrecognizedCount;
+        }
+
+        public int getSpuriousCount() {
+            return spuriousCount;
+        }
 
         public Results(int recognizedCount, int unrecognizedCount, int misrecognizedCount, int spuriousCount) {
             this.recognizedCount = recognizedCount;
@@ -23,9 +34,17 @@ public class RecognizerTestCase {
         }
     }
 
-    private static class ExpectedSymbol {
-        public float time;
-        public int symbol;
+    public static class ExpectedSymbol {
+        private float time;
+        private int symbol;
+
+        public float getTime() {
+            return time;
+        }
+
+        public int getSymbol() {
+            return symbol;
+        }
 
         public ExpectedSymbol(float time, int symbol) {
             this.time = time;
@@ -35,18 +54,18 @@ public class RecognizerTestCase {
         public static ExpectedSymbol[] makePattern(CodeLibrary l, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
             ExpectedSymbol[] pattern = new ExpectedSymbol[sequence.length * repeatCount];
 
-            if(l.getMaxCodeRows() * FrequencyTransformer.ROW_TIME <= RECOGNIZE_WINDOW * 2f) {
+            if (l.getMaxCodeRows() * FrequencyTransformer.ROW_TIME <= RECOGNIZE_WINDOW * 2f) {
                 throw new Error("Code shorter than recognition window -- tests will be screwy!");
             }
 
-            for(int j = 0; j < repeatCount; ++j) {
+            for (int j = 0; j < repeatCount; ++j) {
                 float time = startTime + repeatPeriod * j;
                 int offset = sequence.length * j;
-                for(int i = 0; i < sequence.length; ++i) {
+                for (int i = 0; i < sequence.length; ++i) {
                     float symbolTime = l.getCodeForSymbol(sequence[i]).size() / SampleSeries.SAMPLE_RATE;
                     pattern[offset + i] = new ExpectedSymbol(time, sequence[i]);
                     time += symbolTime;
-                    if(i % 2 == 1) {
+                    if (i % 2 == 1) {
                         time += FrequencyTransformer.WAVELET_WINDOW_SAMPLES / SampleSeries.SAMPLE_RATE;
                     }
                 }
@@ -63,9 +82,25 @@ public class RecognizerTestCase {
     private SampleSeries testSeries;
     private ExpectedSymbol[] expectedSymbols;
 
-    public void enableLogging() { log = true; }
-    public void disableLogging() { log = false; }
-    public String getName() { return name; }
+    public void enableLogging() {
+        log = true;
+    }
+
+    public void disableLogging() {
+        log = false;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public SampleSeries getTestSeries() {
+        return testSeries;
+    }
+
+    public ExpectedSymbol[] getExpectedSymbols() {
+        return expectedSymbols;
+    }
 
     public RecognizerTestCase(String name, CodeLibrary l, SampleSeries testSeries, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
         this.name = name;
@@ -80,10 +115,11 @@ public class RecognizerTestCase {
         int spuriousCount = 0;
 
         int i = 0;
+        boolean misrecognizedThis = false;
 
         recognizer.warmup(testSeries);
         recognizer.process(testSeries);
-        if(log) {
+        if (log) {
             System.out.print("Expecting:");
             for (ExpectedSymbol es : expectedSymbols) {
                 System.out.print(String.format(" %d (%.3f)", es.symbol, es.time));
@@ -91,35 +127,39 @@ public class RecognizerTestCase {
             System.out.println();
             System.out.print("Found:");
         }
-        while(recognizer.hasNextSymbol()) {
+        while (recognizer.hasNextSymbol()) {
             int sym = recognizer.nextSymbol();
             float t = recognizer.getLastSymbolTime();
-            if(log && sym >= 0) {
+            if (log && sym >= 0) {
                 System.out.print(String.format(" %d (%.3f)", sym, t));
             }
-            while(i < expectedSymbols.length && t > expectedSymbols[i].time + RECOGNIZE_WINDOW) {
+            while (i < expectedSymbols.length && t > expectedSymbols[i].time + RECOGNIZE_WINDOW) {
+                if(misrecognizedThis) {
+                    ++misrecognizedCount;
+                }
+                else {
+                    ++unrecognizedCount;
+                }
                 ++i;
-                ++unrecognizedCount;
+                misrecognizedThis = false;
             }
-            if(sym >= 0) {
-                if(i >= expectedSymbols.length) {
+            if (sym >= 0) {
+                if (i >= expectedSymbols.length) {
                     ++spuriousCount;
-                }
-                else if(t < expectedSymbols[i].time - RECOGNIZE_WINDOW) {
+                } else if (t < expectedSymbols[i].time - RECOGNIZE_WINDOW) {
                     ++spuriousCount;
-                }
-                else if(t >= expectedSymbols[i].time - RECOGNIZE_WINDOW && t <= expectedSymbols[i].time + RECOGNIZE_WINDOW) {
-                    if(sym == expectedSymbols[i].symbol) {
+                } else if (t >= expectedSymbols[i].time - RECOGNIZE_WINDOW && t <= expectedSymbols[i].time + RECOGNIZE_WINDOW) {
+                    if (sym == expectedSymbols[i].symbol) {
                         ++recognizedCount;
                         ++i;
-                    }
-                    else if(sym >= 0){
-                        ++misrecognizedCount;
+                        misrecognizedThis = false;
+                    } else if (sym >= 0) {
+                        misrecognizedThis = true;
                     }
                 }
             }
         }
-        if(log) {
+        if (log) {
             System.out.println();
         }
         unrecognizedCount += expectedSymbols.length - i;

@@ -24,19 +24,25 @@ public class Main {
 
         // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
         int[] sequence = new int[] {8, 4, 5, 6, 12, 6, 12, 6, 15, 6, 0, 2, 7, 7, 15, 6, 2, 7, 12, 6, 4, 6, 1, 2};
-        RecognizerTestCase[] testCases = new RecognizerTestCase[] {
-                new RecognizerTestCase("clean", l, hw, sequence, 0.000f, 10f, 1),
+        RecognizerTestCase cleanTestCase = new RecognizerTestCase("clean", l, hw, sequence, 0.000f, 10f, 1);
+        RecognizerTestCase closeLoudTestCase =
                 new RecognizerTestCase("close loud", l, SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav"),
-                        sequence, 5.190f, 10f, 5),
+                        sequence, 5.190f, 10f, 5);
+        RecognizerTestCase closeSoftTestCase =
                 new RecognizerTestCase("close soft", l, SampleSeries.readFromFile("chirpSamples/cone-close-soft.wav"),
-                        sequence, 2.465f, 10f, 5),
+                        sequence, 2.465f, 10f, 5);
+        RecognizerTestCase farLoudTestCase =
                 new RecognizerTestCase("far loud", l, SampleSeries.readFromFile("chirpSamples/cone-loud.wav"),
-                        sequence, 3.420f, 10f, 6),
+                        sequence, 3.420f, 10f, 6);
+        RecognizerTestCase farSoftTestCase =
                 new RecognizerTestCase("far soft", l, SampleSeries.readFromFile("chirpSamples/cone-soft.wav"),
-                        sequence, 2.210f, 10f, 6),
+                        sequence, 2.210f, 10f, 6);
+        RecognizerTestCase tableTestCase =
                 new RecognizerTestCase("table", l, SampleSeries.readFromFile("chirpSamples/closeRange.wav"),
-                        sequence, 4.270f, 10f, 2),
-        };
+                        sequence, 4.270f, 10f, 2);
+
+        RecognizerTestCase[] testCases = new RecognizerTestCase[] { cleanTestCase, closeLoudTestCase,
+                closeSoftTestCase, farLoudTestCase, farSoftTestCase, tableTestCase };
 
         System.out.println("Running tests!");
         for(RecognizerTestCase testCase: testCases) {
@@ -48,8 +54,9 @@ public class Main {
         }
 
         //printFingerprints(new TimeCorrelatingRecognizer(l));
-        //printFrequencyHeatMap(hw);
-        printFrequencyHeatMap(SampleSeries.readFromFile("chirpSamples/closeRange.wav"), true);
+        //printTestFrequencyHeatMap(closeLoudTestCase, new TimeCorrelatingRecognizer(l));
+        printFrequencyHeatMap(closeLoudTestCase.getTestSeries(), true);
+        printQualityHeatMap(closeLoudTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
 
         System.out.println("Done.\n");
     }
@@ -83,6 +90,34 @@ public class Main {
         }
     }
 
+    private static void printTestFrequencyHeatMap(RecognizerTestCase testCase, TimeCorrelatingRecognizer rec) {
+        int numRows = testCase.getTestSeries().size() / FrequencyTransformer.ROW_SAMPLES;
+        float[] heatMap = new float[numRows * FrequencyTransformer.BINS_PER_ROW];
+        for(RecognizerTestCase.ExpectedSymbol es: testCase.getExpectedSymbols()) {
+            int offset = (int)Math.rint(es.getTime() / FrequencyTransformer.ROW_TIME) *
+                    FrequencyTransformer.BINS_PER_ROW;
+            TimeCorrelatingRecognizer.Fingerprint fp = (TimeCorrelatingRecognizer.Fingerprint)rec.getFingerprintForSymbol(es.getSymbol());
+            for(int[] patternRow: fp.getPattern()) {
+                for(int binNumber: patternRow) {
+                    if(offset + binNumber < heatMap.length) {
+                        heatMap[offset + binNumber] = 1f;
+                    }
+                }
+            }
+        }
+        printHeatMap(heatMap, numRows, FrequencyTransformer.BINS_PER_ROW, true, true, true, new RowAnnotator() {
+            public String annotateColBefore(int col, float[] bins) {
+                if(col < 0) {
+                    return "     ";
+                }
+                else {
+                    return String.format("%5.0f",
+                            FrequencyTransformer.MIN_FREQUENCY + col * FrequencyTransformer.BIN_BANDWIDTH);
+                }
+            }
+        });
+    }
+
     private static void printFrequencyHeatMap(SampleSeries series, boolean adaptiveNoiseReject) {
         int numRows = series.size() / FrequencyTransformer.ROW_SAMPLES;
         FrequencyTransformer ft = new FrequencyTransformer(adaptiveNoiseReject, false);
@@ -93,54 +128,49 @@ public class Main {
         while(rowsTranscribed < numRows) {
             int rows = Math.min(numRows - rowsTranscribed, ft.getAvailableRows());
             ft.getBinRows(heatMap, rowsTranscribed * FrequencyTransformer.BINS_PER_ROW, rows);
+            ft.discardRows(rows);
             rowsTranscribed += rows;
         }
         printHeatMap(heatMap, numRows, FrequencyTransformer.BINS_PER_ROW, true, true, true, new RowAnnotator() {
             public String annotateColBefore(int col, float[] bins) {
                 if(col < 0) {
-                    return "       ";
+                    return "     ";
                 }
                 else {
-                    return String.format("%5.0f: ",
+                    return String.format("%5.0f",
                             FrequencyTransformer.MIN_FREQUENCY + col * FrequencyTransformer.BIN_BANDWIDTH);
                 }
             }
         });
     }
 
-    private static void printQualityHeatMap(CodeLibrary l, SampleSeries series, CodeRecognizer rec) {
+    private static void printQualityHeatMap(SampleSeries series, CodeRecognizer rec) {
+        CodeLibrary l = rec.getLibrary();
         int numRows = (int)(series.size() / FrequencyTransformer.ROW_SAMPLES) -
                 l.getMaxCodeRows();
         float[] heatMap = new float[numRows * CodeLibrary.NUM_SYMBOLS];
+        float mx = heatMap[0];
+        float mn = heatMap[0];
+        for(float f: heatMap) {
+            mx = Math.max(mx, f);
+            mn = Math.min(mn, f);
+        }
+        for(int i = 0; i < heatMap.length; ++i) {
+            heatMap[i] = (heatMap[i] - mn) / (mx - mn);
+        }
         rec.warmup(series);
         rec.process(series);
         rec.matchQualityGraph(heatMap);
         printHeatMap(heatMap, numRows, CodeLibrary.NUM_SYMBOLS, true, true, true, new RowAnnotator() {
             public String annotateColBefore(int col, float[] bins) {
                 if(col < 0) {
-                    return "    ";
+                    return "     ";
                 }
                 else {
-                    return String.format("%2d: ", col);
+                    return String.format("%5d", col);
                 }
             }
         });
-    }
-
-
-    private static void recognize(CodeRecognizer r, SampleSeries series)
-    {
-        System.out.print("Symbols:");
-        r.warmup(series);
-        r.process(series);
-        while(r.hasNextSymbol()) {
-            int sym = r.nextSymbol();
-            float t = r.getLastSymbolTime();
-            if(sym >= 0) {
-                System.out.print(String.format(" %d (%.3f)", sym, t));
-            }
-        }
-        System.out.println();
     }
 
     private static class RowAnnotator {
@@ -162,17 +192,17 @@ public class Main {
     }
 
     private static void printHeatMap(float[] data, int rows, int cols, boolean transpose, boolean topFrame, boolean bottomFrame, RowAnnotator annotator) {
-        char[] graphChars = new char[] {' ', '.', ':', 'i', 'u', '*', '@', 'X'};
+        char[] graphChars = new char[]{' ', '.', ':', 'i', 'u', '*', '@', 'X'};
 
-        if(rows * cols > data.length) {
+        if (rows * cols > data.length) {
             throw new Error("Data too small!");
         }
 
-        if(annotator == null) {
+        if (annotator == null) {
             annotator = new RowAnnotator();
         }
 
-        if(transpose) {
+        if (transpose) {
             if (topFrame) {
                 System.out.print(String.format("%s+", annotator.annotateColBefore(-1, data)));
                 for (int i = 0; i < rows; ++i) {
@@ -181,7 +211,7 @@ public class Main {
                 System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
             }
 
-            for (int i = 0; i < cols; ++i) {
+            for (int i = cols - 1; i >= 0; --i) {
                 System.out.print(String.format("%s|", annotator.annotateColBefore(i, data)));
                 for (int j = 0; j < rows; ++j) {
                     float val = data[j * cols + i];
@@ -201,8 +231,7 @@ public class Main {
                 }
                 System.out.println(String.format("+%s", annotator.annotateColAfter(-1, data)));
             }
-        }
-        else {
+        } else {
             if (topFrame) {
                 System.out.print(String.format("%s+", annotator.annotateRowBefore(-1, data)));
                 for (int i = 0; i < cols; ++i) {

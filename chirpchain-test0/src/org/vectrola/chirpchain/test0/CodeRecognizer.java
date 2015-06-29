@@ -10,35 +10,59 @@ public abstract class CodeRecognizer {
 
         protected SampleSeries code;
         protected float[] bins;
-        private int matchRows;
+        private int[][] pattern;
 
         public float[] getBins() {
             return bins;
         }
 
+        public int[][] getPattern() {
+            return pattern;
+        }
+
         public int getMatchRows() {
-            return matchRows;
+            return pattern.length;
         }
 
         public Fingerprint(SampleSeries code) {
             this.code = code;
-            this.matchRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
 
-            int fingerprintRows;
+            int fingerprintRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
 
             synchronized (fingerprintFT) {
                 fingerprintFT.flush();
                 fingerprintFT.addSamples(code);
                 fingerprintFT.addSamples(pad);
 
-                bins = new float[matchRows * FrequencyTransformer.BINS_PER_ROW];
-                fingerprintFT.getBinRows(bins, matchRows);
+                bins = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
+                fingerprintFT.getBinRows(bins, fingerprintRows);
             }
 
+            makePattern();
+        }
+
+        private void makePattern() {
+            int rows = bins.length / FrequencyTransformer.BINS_PER_ROW;
+            pattern = new int[rows][];
+            float mx = max(getBins());
+            float threshold = mx * 0.5f;
+            int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
+            int rowTempUsed;
+            for (int j = 0; j < rows; ++j) {
+                rowTempUsed = 0;
+                for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    int offset = j * FrequencyTransformer.BINS_PER_ROW + i;
+                    if (bins[offset] > threshold) {
+                        rowTemp[rowTempUsed++] = offset;
+                    }
+                }
+                pattern[j] = new int[rowTempUsed];
+                System.arraycopy(rowTemp, 0, pattern[j], 0, rowTempUsed);
+            }
         }
     }
 
-    protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer(false, false);
+    protected FrequencyTransformer frequencyTransformer = new FrequencyTransformer(true, false);
     protected CodeLibrary library;
     protected Fingerprint[] codeFingerprints;
 
@@ -54,16 +78,24 @@ public abstract class CodeRecognizer {
         return library;
     }
 
+    public Fingerprint getFingerprintForSymbol(int symbol) {
+        return codeFingerprints[symbol];
+    }
+
     public CodeRecognizer(CodeLibrary library, float matchBaseThreshold, float matchBestToSecondBestThreshold) {
         this.library = library;
         this.codeFingerprints = new Fingerprint[CodeLibrary.NUM_SYMBOLS];
         this.matchBaseThreshold = matchBaseThreshold;
         this.matchBestToSecondBestThreshold = matchBestToSecondBestThreshold;
+
+        fingerprintLibrary();
     }
 
-    public Fingerprint getFingerprintForSymbol(int symbol)
-    {
-        return codeFingerprints[symbol];
+    public void fingerprintLibrary() {
+        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            SampleSeries code = library.getCodeForSymbol(i);
+            codeFingerprints[i] = new Fingerprint(code);
+        }
     }
 
     public void warmup(SampleSeries samples) {
@@ -78,9 +110,9 @@ public abstract class CodeRecognizer {
     public boolean matchQualityGraph(float[] results) {
         int resultRows = results.length / CodeLibrary.NUM_SYMBOLS;
         float bins[] = new float[library.getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
-        for(int i = 0; i < resultRows; ++i) {
+        for (int i = 0; i < resultRows; ++i) {
             frequencyTransformer.getBinRows(bins, library.getMaxCodeRows());
-            for(int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
+            for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
                 results[i * CodeLibrary.NUM_SYMBOLS + j] = matchQuality(getFingerprintForSymbol(j), bins);
             }
             frequencyTransformer.discardRows(1);
@@ -112,7 +144,7 @@ public abstract class CodeRecognizer {
         while (!hasNextSymbol && canMatch()) {
             int matchSym = tryFindMatch();
 
-            if(matchSym != -1) {
+            if (matchSym != -1) {
                 assert matchSym != -1;
                 int codeRows = getFingerprintForSymbol(matchSym).getMatchRows();
                 hasNextSymbol = true;
@@ -120,10 +152,9 @@ public abstract class CodeRecognizer {
                 nextSymbol = matchSym;
                 lastSymbolTime = frequencyTransformer.getTime();
                 frequencyTransformer.discardRows(codeRows - 2);
-            }
-            else {
+            } else {
                 ++rowsSinceSymbolDetected;
-                if(rowsSinceSymbolDetected > library.getMaxCodeRows()) {
+                if (rowsSinceSymbolDetected > library.getMaxCodeRows()) {
                     hasNextSymbol = true;
                     rowsSinceSymbolDetected = 0;
                     nextSymbol = -1; // break
