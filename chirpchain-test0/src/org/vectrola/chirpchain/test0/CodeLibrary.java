@@ -7,13 +7,82 @@ import java.util.Vector;
  * Created by jlunder on 6/10/15.
  */
 public class CodeLibrary {
+    public static class Fingerprint {
+        protected static final LiveFrequencyTransformer fingerprintFT = new LiveFrequencyTransformer(false, true);
+        protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
+
+        protected SampleSeries code;
+        protected float[] bins;
+        protected int[][] pattern;
+        protected float mean;
+
+        public float[] getBins() {
+            return bins;
+        }
+
+        public int[][] getPattern() {
+            return pattern;
+        }
+
+        public int getMatchRows() {
+            return pattern.length;
+        }
+
+        public float getMean() {
+            return mean;
+        }
+
+        public Fingerprint(SampleSeries code) {
+            this.code = code;
+
+            int fingerprintRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
+
+            synchronized (fingerprintFT) {
+                fingerprintFT.reset();
+                fingerprintFT.addSamples(code);
+                fingerprintFT.addSamples(pad);
+
+                bins = new float[fingerprintRows * FrequencyTransformer.BINS_PER_ROW];
+                fingerprintFT.getBinRows(bins, fingerprintRows);
+            }
+
+            mean = Util.mean(bins);
+            makePattern();
+        }
+
+        private void makePattern() {
+            int rows = bins.length / FrequencyTransformer.BINS_PER_ROW;
+            pattern = new int[rows][];
+            float mx = Util.max(getBins());
+            float threshold = mx * 0.5f;
+            int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
+            int rowTempUsed;
+            for (int j = 0; j < rows; ++j) {
+                rowTempUsed = 0;
+                for (int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
+                    int offset = j * FrequencyTransformer.BINS_PER_ROW + i;
+                    if (bins[offset] > threshold) {
+                        rowTemp[rowTempUsed++] = offset;
+                    }
+                }
+                pattern[j] = new int[rowTempUsed];
+                System.arraycopy(rowTemp, 0, pattern[j], 0, rowTempUsed);
+            }
+        }
+    }
+
     public static int NUM_SYMBOLS = 16;
 
     private SampleSeries[] codeSamples = new SampleSeries[NUM_SYMBOLS];
+    protected Fingerprint[] codeFingerprints =  new Fingerprint[NUM_SYMBOLS];
     private float maxCodeLength = -1f;
 
     public SampleSeries getCodeForSymbol(int symbol) {
         return codeSamples[symbol];
+    }
+
+    public Fingerprint getFingerprintForSymbol(int symbol) {
+        return codeFingerprints[symbol];
     }
 
     public int getMaxCodeRows() {
@@ -30,6 +99,12 @@ public class CodeLibrary {
         }
 
         return maxCodeLength;
+    }
+
+    public void fingerprintLibrary() {
+        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            codeFingerprints[i] = new Fingerprint(codeSamples[i]);
+        }
     }
 
     private static float[] computeNewEntryCrossMatch(Vector<CodeEntry> entries, CodeEntry e) {
@@ -111,6 +186,7 @@ public class CodeLibrary {
         l.codeSamples[13] = makeChirpCode(0.005f, 1000f, 100f, 3, new int[] {0, 1, 20, 25, 15, 0, 2, 15, 32, 12, 1, 2, 24, 42, 17});
         l.codeSamples[14] = makeChirpCode(0.005f, 1000f, 100f, 2, new int[] {0, 2, 24, 47, 16, 0, 1, 8, 1, 19});
         l.codeSamples[15] = makeChirpCode(0.005f, 1000f, 100f, 2, new int[] {1, 1, 12, 7, 12, 1, 1, 5, 8, 16});
+        l.fingerprintLibrary();
 
         return l;
     }
@@ -181,7 +257,7 @@ public class CodeLibrary {
         public int componentCount;
         public int[] params;
         public SampleSeries code;
-        public CodeRecognizer.Fingerprint fp;
+        public Fingerprint fp;
         float[] inputPeaks;
         public float highestQ;
         public float totalQ;
@@ -214,7 +290,7 @@ public class CodeLibrary {
                 params[i * 5 + 4] = 10 + r.nextInt(10); // dur
             }
             code = makeChirpCode(timeScale, minFreq, freqScale, componentCount, params);
-            fp = new CodeRecognizer.Fingerprint(code);
+            fp = new Fingerprint(code);
         }
 
         private float getSelfMatchQ() {

@@ -9,109 +9,191 @@ import java.util.Random;
  * Created by jlunder on 5/16/15.
  */
 public class Main {
-    public static void main(String[] args) throws IOException {
-        System.out.print("Generating code library\n");
+    private static CodeLibrary library = CodeLibrary.makeChirpCodes();
+    private static int[] sequence = new int[] {8, 4, 5, 6, 12, 6, 12, 6, 15, 6, 0, 2, 7, 7, 15, 6, 2, 7, 12, 6, 4, 6, 1, 2};
+    private static RecognizerTestCase closeLoudTestCase =
+            new RecognizerTestCase("close loud", 1.0f, library, tryReadSamples("chirpSamples/cone-close-loud.wav"),
+                    sequence, 5.190f, 10f, 5);
+    private static RecognizerTestCase closeSoftTestCase =
+            new RecognizerTestCase("close soft", 0.5f, library, tryReadSamples("chirpSamples/cone-close-soft.wav"),
+                    sequence, 2.465f, 10f, 5);
+    private static RecognizerTestCase farLoudTestCase =
+            new RecognizerTestCase("far loud", 0.5f, library, tryReadSamples("chirpSamples/cone-loud.wav"),
+                    sequence, 3.420f, 10f, 6);
+    private static RecognizerTestCase farSoftTestCase =
+            new RecognizerTestCase("far soft", 0.25f, library, tryReadSamples("chirpSamples/cone-soft.wav"),
+                    sequence, 2.210f, 10f, 6);
+    private static RecognizerTestCase tableTestCase =
+            new RecognizerTestCase("table", 1.0f, library, tryReadSamples("chirpSamples/closeRange.wav"),
+                    sequence, 4.270f, 10f, 2);
+    private static RecognizerTestCase[] testCases = new RecognizerTestCase[] { closeLoudTestCase,
+            closeSoftTestCase, farLoudTestCase, farSoftTestCase, tableTestCase };
 
-        CodeLibrary l = CodeLibrary.makeChirpCodes();
-        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            //l.getCodeForSymbol(i).writeToFile(String.format("chirp%03d.wav", i));
+    private static SampleSeries tryReadSamples(String filename) {
+        try {
+            return SampleSeries.readFromFile(filename);
         }
+        catch(IOException e) {
+            return null;
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        /*
+        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            library.getCodeForSymbol(i).writeToFile(String.format("chirp%03d.wav", i));
+        }
+        */
 
 
-        SampleSeries challenge = SampleSeries.readFromFile("helloworld-challenge.wav");
+        //SampleSeries challenge = SampleSeries.readFromFile("helloworld-challenge.wav");
 
         System.out.print("Encoding string\n");
 
-        SampleSeries hw = encodeString(l, "Hello world!");
+        SampleSeries hw = encodeString(library, "Hello world!");
         hw.writeToFile("helloworld.wav");
 
         // 8 4 5 6 / 12 6 12 6 / 15 6 0 2 / 7 7 15 6 / 2 7 12 6 / 4 6 1 2
-        int[] sequence = new int[] {8, 4, 5, 6, 12, 6, 12, 6, 15, 6, 0, 2, 7, 7, 15, 6, 2, 7, 12, 6, 4, 6, 1, 2};
-        RecognizerTestCase cleanTestCase = new RecognizerTestCase("clean", l, hw, sequence, 0.000f, 10f, 1);
-        RecognizerTestCase closeLoudTestCase =
-                new RecognizerTestCase("close loud", l, SampleSeries.readFromFile("chirpSamples/cone-close-loud.wav"),
-                        sequence, 5.190f, 10f, 5);
-        RecognizerTestCase closeSoftTestCase =
-                new RecognizerTestCase("close soft", l, SampleSeries.readFromFile("chirpSamples/cone-close-soft.wav"),
-                        sequence, 2.465f, 10f, 5);
-        RecognizerTestCase farLoudTestCase =
-                new RecognizerTestCase("far loud", l, SampleSeries.readFromFile("chirpSamples/cone-loud.wav"),
-                        sequence, 3.420f, 10f, 6);
-        RecognizerTestCase farSoftTestCase =
-                new RecognizerTestCase("far soft", l, SampleSeries.readFromFile("chirpSamples/cone-soft.wav"),
-                        sequence, 2.210f, 10f, 6);
-        RecognizerTestCase tableTestCase =
-                new RecognizerTestCase("table", l, SampleSeries.readFromFile("chirpSamples/closeRange.wav"),
-                        sequence, 4.270f, 10f, 2);
+        RecognizerTestCase cleanTestCase = new RecognizerTestCase("clean", 0f, library, hw, sequence, 0.000f, 10f, 1);
 
-        RecognizerTestCase[] testCases = new RecognizerTestCase[] { cleanTestCase, closeLoudTestCase,
-                closeSoftTestCase, farLoudTestCase, farSoftTestCase, tableTestCase };
 
         System.out.println("Running tests!");
+
+        //TimeCorrelatingRecognizer.Parameters autoTunedParams = autoTune();
+        /*
+        TimeCorrelatingRecognizer.Parameters autoTunedParams = new TimeCorrelatingRecognizer.Parameters();
+        autoTunedParams.rowThreshold = 0.613164f;
+        autoTunedParams.binMinimum = 0.0247785f;
+        autoTunedParams.zoneThreshold = 0.0670108f;
+        autoTunedParams.zoneCount = 10;
+        autoTunedParams.zoneCountThreshold = 0.518978f;
+        autoTunedParams.matchBaseThreshold = 0.314252f;
+        autoTunedParams.matchBestToSecondBestThreshold = 0.0857519f;
+        */
+        TimeCorrelatingRecognizer.Parameters autoTunedParams = new TimeCorrelatingRecognizer.Parameters();
+        autoTunedParams.rowThreshold = 0.201643f;
+        autoTunedParams.binMinimum = -0.251239f;
+        autoTunedParams.zoneThreshold = 0.00811279f;
+        autoTunedParams.zoneCount = 12;
+        autoTunedParams.zoneCountThreshold = 0.630518f;
+        autoTunedParams.matchBaseThreshold = 0.191583f;
+        autoTunedParams.matchBestToSecondBestThreshold = 0.127950f;
+
+        TimeCorrelatingRecognizer.Parameters handTunedParams = new TimeCorrelatingRecognizer.Parameters();
+        handTunedParams.rowThreshold = 0.613164f;
+        handTunedParams.binMinimum = 0.0247785f;
+        handTunedParams.zoneThreshold = 0.0670108f;
+        handTunedParams.zoneCount = 10;
+        handTunedParams.zoneCountThreshold = 0.518978f;
+        handTunedParams.matchBaseThreshold = 0.314252f;
+        handTunedParams.matchBestToSecondBestThreshold = 0.0857519f;
+
+        /*174.500
+        p.rowThreshold = 0.576793f;
+        p.binMinimum = 0.00156026f;
+        p.zoneThreshold = 0.242255f;
+        p.zoneCount = 6f;
+        p.zoneCountThreshold = 0.0564383f;
+        p.matchBaseThreshold = 0.441303f;
+        p.matchBestToSecondBestThreshold = 0.273035f;
+        */
+        /*
+        handTunedParams.rowThreshold = 0.7f;
+        handTunedParams.binMinimum = -0.5f;
+        handTunedParams.zoneThreshold = 0.5f;
+        handTunedParams.zoneCount = 8;
+        handTunedParams.zoneCountThreshold = 0.875f;
+        handTunedParams.matchBaseThreshold = 0.5f;
+        handTunedParams.matchBestToSecondBestThreshold = 0.01f;
+        */
+
         for(RecognizerTestCase testCase: testCases) {
-            RecognizerTestCase.Results results =
-                    testCase.testRecognizer(new TimeCorrelatingRecognizer(l, testCase.getFrequencyTransformer()));
+            RecognizerTestCase.Results autoTunedResults = testCase.testRecognizer(new TimeCorrelatingRecognizer(library,
+                    testCase.getFrequencyTransformer(), autoTunedParams));
             System.out.println(String.format(
-                    "Testing %20s: %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious",
-                    testCase.getName(), results.getRecognizedCount(), results.getUnrecognizedCount(),
-                    results.getMisrecognizedCount(), results.getSpuriousCount()));
+                    "Testing %20s (auto): %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious (score %g)",
+                    testCase.getName(), autoTunedResults.getRecognizedCount(), autoTunedResults.getUnrecognizedCount(),
+                    autoTunedResults.getMisrecognizedCount(), autoTunedResults.getSpuriousCount(),
+                    scoreTestResults(autoTunedResults) * testCase.getWeight()));
+
+            RecognizerTestCase.Results handTunedResults = testCase.testRecognizer(new TimeCorrelatingRecognizer(library,
+                    testCase.getFrequencyTransformer(), handTunedParams));
+            System.out.println(String.format(
+                    "Testing %20s (hand): %3d recognized, %3d unrecognized, %3d misrecognized, %3d spurious (score %g)",
+                    testCase.getName(), handTunedResults.getRecognizedCount(), handTunedResults.getUnrecognizedCount(),
+                    handTunedResults.getMisrecognizedCount(), handTunedResults.getSpuriousCount(),
+                    scoreTestResults(handTunedResults) * testCase.getWeight()));
         }
 
         //printFingerprints(new TimeCorrelatingRecognizer(l));
         //printTestFrequencyHeatMap(closeLoudTestCase, new TimeCorrelatingRecognizer(l));
-        printFrequencyHeatMap(cleanTestCase.getFrequencyTransformer(), true);
-        cleanTestCase.getFrequencyTransformer().reset();
-        printQualityHeatMap(new TimeCorrelatingRecognizer(l, cleanTestCase.getFrequencyTransformer()));
-        cleanTestCase.getFrequencyTransformer().reset();
+        //printFrequencyHeatMap(cleanTestCase.getFrequencyTransformer(), true);
+        //cleanTestCase.getFrequencyTransformer().reset();
+        //printQualityHeatMap(new TimeCorrelatingRecognizer(library, cleanTestCase.getFrequencyTransformer()));
+        //cleanTestCase.getFrequencyTransformer().reset();
 
         System.out.println("Done.\n");
     }
 
-    private static class Parameters {
-        private static final float ROW_THRESHOLD_MIN = 0.0001f;
-        private static final float ROW_THRESHOLD_MAX = 1f;
-        private static final float BIN_MINIMUM_MIN = (float)Math.log(1e-5f);
-        private static final float BIN_MINIMUM_MAX = 1.0f;
-        private static final float ZONE_THRESHOLD_MIN = 0.5f;
-        private static final float ZONE_THRESHOLD_MAX = 0.5f;
-        private static final int ZONE_COUNT_MIN = 1;
-        private static final int ZONE_COUNT_MAX = 16;
-        private static final int ZONE_COUNT_THRESHOLD_MIN = 1;
-        private static final int ZONE_COUNT_THRESHOLD_MAX = 16;
-        private static final float MATCH_BASE_THRESHOLD_MIN = 0f;
-        private static final float MATCH_BASE_THRESHOLD_MAX = 1f;
-        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MIN = 1e-3f;
-        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MAX = 1f;
+    private static TimeCorrelatingRecognizer.Parameters autoTune() {
+        Random r = new Random();
+        TimeCorrelatingRecognizer.Parameters bestParams = TimeCorrelatingRecognizer.Parameters.makeRandom(r);
+        float bestFitness = evaluate(bestParams);
+        TimeCorrelatingRecognizer.Parameters annealParams = TimeCorrelatingRecognizer.Parameters.makeRandom(r);
+        float annealFitness = evaluate(bestParams);
+        int maxI = 1000;
 
-        public float rowThreshold;
-        public float binMinimum;
-        public float zoneThreshold;
-        public int zoneCount;
-        public int zoneCountThreshold;
-        public float matchBaseThreshold;
-        public float matchBestToSecondBestThreshold;
-
-        public static Parameters makeRandom(Random r) {
-            return new Parameters();
+        for (int i = maxI; i > 0; --i) {
+            float temp = ((float)i / maxI) * 100f;
+            TimeCorrelatingRecognizer.Parameters params = bestParams.mutate(r, (float) i / maxI);
+            float fitness = evaluate(params);
+            if(fitness > bestFitness) {
+                bestParams = params;
+                bestFitness = fitness;
+                annealParams = params;
+                annealFitness = fitness;
+                System.out.println(String.format("New best fitness (i=%d): %g", i, bestFitness));
+                System.out.println(String.format("  p.rowThreshold = %gf;", bestParams.rowThreshold));
+                System.out.println(String.format("  p.binMinimum = %gf;", bestParams.binMinimum));
+                System.out.println(String.format("  p.zoneThreshold = %gf;", bestParams.zoneThreshold));
+                System.out.println(String.format("  p.zoneCount = %d;", bestParams.zoneCount));
+                System.out.println(String.format("  p.zoneCountThreshold = %gf;", bestParams.zoneCountThreshold));
+                System.out.println(String.format("  p.matchBaseThreshold = %gf;", bestParams.matchBaseThreshold));
+                System.out.println(String.format("  p.matchBestToSecondBestThreshold = %gf;",
+                        bestParams.matchBestToSecondBestThreshold));
+            }
+            else if(fitness + temp > annealFitness) {
+                annealParams = params;
+                annealFitness = fitness;
+            }
         }
 
-        public Parameters mutate(Random r, float distance) {
-            return new Parameters();
-        }
-
-        public Parameters combine(Random r, Parameters other) {
-            return new Parameters();
-        }
+        return bestParams;
     }
 
-    private static void autoTune() {
+    private static float evaluate(TimeCorrelatingRecognizer.Parameters params) {
+        float totalScore = 0f;
+
+        for(RecognizerTestCase testCase: testCases) {
+            float score = scoreTestResults(testCase.testRecognizer(
+                    new TimeCorrelatingRecognizer(library, testCase.getFrequencyTransformer(), params)));
+            totalScore += score * testCase.getWeight();
+        }
+        return totalScore;
+    }
+
+    private static float scoreTestResults(RecognizerTestCase.Results results) {
+        return (1f * results.getRecognizedCount()) +
+                (-1f * results.getUnrecognizedCount()) +
+                (-1f * results.getMisrecognizedCount()) +
+                (-2f * results.getSpuriousCount());
     }
 
     private static void printFingerprints(CodeRecognizer rec) {
         LiveFrequencyTransformer ft = new LiveFrequencyTransformer(false, false);
         float[] heatMap = new float[rec.getLibrary().getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
         for(int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            CodeRecognizer.Fingerprint fp = rec.getFingerprintForSymbol(i);
+            CodeLibrary.Fingerprint fp = rec.getLibrary().getFingerprintForSymbol(i);
             int rows;
             ft.reset();
             ft.addSamples(fp.code);
@@ -121,12 +203,9 @@ public class Main {
             printHeatMap(heatMap, rows, FrequencyTransformer.BINS_PER_ROW, false, true, true, new RowAnnotator() {
                 @Override
                 public int annotateChar(int row, int col, float[] bins, float value) {
-                    if (fp instanceof TimeCorrelatingRecognizer.Fingerprint) {
-                        TimeCorrelatingRecognizer.Fingerprint tcfp = (TimeCorrelatingRecognizer.Fingerprint) fp;
-                        for (int bin : tcfp.getPattern()[row]) {
-                            if (bin == row * FrequencyTransformer.BINS_PER_ROW + col) {
-                                return (int) '/';
-                            }
+                    for (int bin : fp.getPattern()[row]) {
+                        if (bin == row * FrequencyTransformer.BINS_PER_ROW + col) {
+                            return (int) '/';
                         }
                     }
                     return -1;
@@ -142,7 +221,7 @@ public class Main {
         for(RecognizerTestCase.ExpectedSymbol es: testCase.getExpectedSymbols()) {
             int offset = (int)Math.rint(es.getTime() / FrequencyTransformer.ROW_TIME) *
                     FrequencyTransformer.BINS_PER_ROW;
-            TimeCorrelatingRecognizer.Fingerprint fp = (TimeCorrelatingRecognizer.Fingerprint)rec.getFingerprintForSymbol(es.getSymbol());
+            CodeLibrary.Fingerprint fp = rec.getLibrary().getFingerprintForSymbol(es.getSymbol());
             for(int[] patternRow: fp.getPattern()) {
                 for(int binNumber: patternRow) {
                     if(offset + binNumber < heatMap.length) {

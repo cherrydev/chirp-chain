@@ -79,6 +79,7 @@ public class RecognizerTestCase {
 
     private boolean log = false;
     private String name;
+    private float weight;
     private FrequencyTransformer frequencyTransformer;
     private SampleSeries testSeries;
     private ExpectedSymbol[] expectedSymbols;
@@ -89,6 +90,10 @@ public class RecognizerTestCase {
 
     public void disableLogging() {
         log = false;
+    }
+
+    public float getWeight() {
+        return weight;
     }
 
     public String getName() {
@@ -107,7 +112,8 @@ public class RecognizerTestCase {
         return expectedSymbols;
     }
 
-    public RecognizerTestCase(String name, CodeLibrary l, SampleSeries testSeries, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
+    public RecognizerTestCase(String name, float weight, CodeLibrary l, SampleSeries testSeries, int[] sequence, float startTime, float repeatPeriod, int repeatCount) {
+        this.weight = weight;
         this.name = name;
         this.testSeries = testSeries;
         this.frequencyTransformer = new MockFrequencyTransformer(testSeries);
