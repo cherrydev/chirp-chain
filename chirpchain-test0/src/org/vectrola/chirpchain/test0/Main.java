@@ -55,8 +55,8 @@ public class Main {
 
         //printFingerprints(new TimeCorrelatingRecognizer(l));
         //printTestFrequencyHeatMap(closeLoudTestCase, new TimeCorrelatingRecognizer(l));
-        printFrequencyHeatMap(closeLoudTestCase.getTestSeries(), true);
-        printQualityHeatMap(closeLoudTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
+        //printFrequencyHeatMap(cleanTestCase.getTestSeries(), true);
+        //printQualityHeatMap(cleanTestCase.getTestSeries(), new TimeCorrelatingRecognizer(l));
 
         System.out.println("Done.\n");
     }
