@@ -1,9 +1,11 @@
 package org.vectrola.chirpchain.test0;
 
 import com.sun.xml.internal.rngom.digested.DDataPattern;
+import jdk.nashorn.internal.codegen.CompilerConstants;
 
 import java.io.IOException;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Created by jlunder on 5/16/15.
@@ -59,17 +61,8 @@ public class Main {
 
         System.out.println("Running tests!");
 
-        //TimeCorrelatingRecognizer.Parameters autoTunedParams = autoTune();
+        TimeCorrelatingRecognizer.Parameters autoTunedParams = autoTune();
         /*
-        TimeCorrelatingRecognizer.Parameters autoTunedParams = new TimeCorrelatingRecognizer.Parameters();
-        autoTunedParams.rowThreshold = 0.613164f;
-        autoTunedParams.binMinimum = 0.0247785f;
-        autoTunedParams.zoneThreshold = 0.0670108f;
-        autoTunedParams.zoneCount = 10;
-        autoTunedParams.zoneCountThreshold = 0.518978f;
-        autoTunedParams.matchBaseThreshold = 0.314252f;
-        autoTunedParams.matchBestToSecondBestThreshold = 0.0857519f;
-        */
         TimeCorrelatingRecognizer.Parameters autoTunedParams = new TimeCorrelatingRecognizer.Parameters();
         autoTunedParams.rowThreshold = 0.201643f;
         autoTunedParams.binMinimum = -0.251239f;
@@ -78,15 +71,36 @@ public class Main {
         autoTunedParams.zoneCountThreshold = 0.630518f;
         autoTunedParams.matchBaseThreshold = 0.191583f;
         autoTunedParams.matchBestToSecondBestThreshold = 0.127950f;
+        */
 
         TimeCorrelatingRecognizer.Parameters handTunedParams = new TimeCorrelatingRecognizer.Parameters();
-        handTunedParams.rowThreshold = 0.613164f;
-        handTunedParams.binMinimum = 0.0247785f;
-        handTunedParams.zoneThreshold = 0.0670108f;
-        handTunedParams.zoneCount = 10;
-        handTunedParams.zoneCountThreshold = 0.518978f;
-        handTunedParams.matchBaseThreshold = 0.314252f;
-        handTunedParams.matchBestToSecondBestThreshold = 0.0857519f;
+        handTunedParams.rowThreshold = 0.326846f;
+        handTunedParams.binMinimum = -0.130795f;
+        handTunedParams.zoneThreshold = 0.171726f;
+        handTunedParams.zoneCount = 11;
+        handTunedParams.zoneCountThreshold = 0.146021f;
+        handTunedParams.matchBaseThreshold = 0.244680f;
+        handTunedParams.matchBestToSecondBestThreshold = 0.126661f;
+
+        /*
+        New best fitness (i=848): 184.000
+          p.rowThreshold = 0.326846f;
+          p.binMinimum = -0.130795f;
+          p.zoneThreshold = 0.171726f;
+          p.zoneCount = 11;
+          p.zoneCountThreshold = 0.146021f;
+          p.matchBaseThreshold = 0.244680f;
+          p.matchBestToSecondBestThreshold = 0.126661f;
+
+        // 179?
+        autoTunedParams.rowThreshold = 0.201643f;
+        autoTunedParams.binMinimum = -0.251239f;
+        autoTunedParams.zoneThreshold = 0.00811279f;
+        autoTunedParams.zoneCount = 12;
+        autoTunedParams.zoneCountThreshold = 0.630518f;
+        autoTunedParams.matchBaseThreshold = 0.191583f;
+        autoTunedParams.matchBestToSecondBestThreshold = 0.127950f;
+        */
 
         /*174.500
         p.rowThreshold = 0.576793f;
@@ -98,6 +112,15 @@ public class Main {
         p.matchBestToSecondBestThreshold = 0.273035f;
         */
         /*
+
+        handTunedParams.rowThreshold = 0.613164f;
+        handTunedParams.binMinimum = 0.0247785f;
+        handTunedParams.zoneThreshold = 0.0670108f;
+        handTunedParams.zoneCount = 10;
+        handTunedParams.zoneCountThreshold = 0.518978f;
+        handTunedParams.matchBaseThreshold = 0.314252f;
+        handTunedParams.matchBestToSecondBestThreshold = 0.0857519f;
+
         handTunedParams.rowThreshold = 0.7f;
         handTunedParams.binMinimum = -0.5f;
         handTunedParams.zoneThreshold = 0.5f;
@@ -139,47 +162,68 @@ public class Main {
         Random r = new Random();
         TimeCorrelatingRecognizer.Parameters bestParams = TimeCorrelatingRecognizer.Parameters.makeRandom(r);
         float bestFitness = evaluate(bestParams);
-        TimeCorrelatingRecognizer.Parameters annealParams = TimeCorrelatingRecognizer.Parameters.makeRandom(r);
-        float annealFitness = evaluate(bestParams);
-        int maxI = 1000;
+        int maxJ = 4;
+        int maxI = 250;
+        int iter = maxJ * maxI;
 
-        for (int i = maxI; i > 0; --i) {
-            float temp = ((float)i / maxI) * 100f;
-            TimeCorrelatingRecognizer.Parameters params = bestParams.mutate(r, (float) i / maxI);
-            float fitness = evaluate(params);
-            if(fitness > bestFitness) {
-                bestParams = params;
-                bestFitness = fitness;
-                annealParams = params;
-                annealFitness = fitness;
-                System.out.println(String.format("New best fitness (i=%d): %g", i, bestFitness));
-                System.out.println(String.format("  p.rowThreshold = %gf;", bestParams.rowThreshold));
-                System.out.println(String.format("  p.binMinimum = %gf;", bestParams.binMinimum));
-                System.out.println(String.format("  p.zoneThreshold = %gf;", bestParams.zoneThreshold));
-                System.out.println(String.format("  p.zoneCount = %d;", bestParams.zoneCount));
-                System.out.println(String.format("  p.zoneCountThreshold = %gf;", bestParams.zoneCountThreshold));
-                System.out.println(String.format("  p.matchBaseThreshold = %gf;", bestParams.matchBaseThreshold));
-                System.out.println(String.format("  p.matchBestToSecondBestThreshold = %gf;",
-                        bestParams.matchBestToSecondBestThreshold));
-            }
-            else if(fitness + temp > annealFitness) {
-                annealParams = params;
-                annealFitness = fitness;
+        for(int j = 0; j < maxJ; ++j) {
+            TimeCorrelatingRecognizer.Parameters annealParams = bestParams;
+            float annealFitness = bestFitness;
+            for (int i = 0; i < maxI; ++i) {
+                float temp = ((float)iter / (maxI * maxJ)) * 50f;
+                TimeCorrelatingRecognizer.Parameters params = annealParams.mutate(r, (float) (1f - i / maxI));
+                float fitness = evaluate(params);
+                if(fitness > bestFitness) {
+                    bestParams = params;
+                    bestFitness = fitness;
+                    annealParams = params;
+                    annealFitness = fitness;
+                    System.out.println(String.format("New best fitness (i=%d): %g", iter, bestFitness));
+                    System.out.println(String.format("  p.rowThreshold = %gf;", bestParams.rowThreshold));
+                    System.out.println(String.format("  p.binMinimum = %gf;", bestParams.binMinimum));
+                    System.out.println(String.format("  p.zoneThreshold = %gf;", bestParams.zoneThreshold));
+                    System.out.println(String.format("  p.zoneCount = %d;", bestParams.zoneCount));
+                    System.out.println(String.format("  p.zoneCountThreshold = %gf;", bestParams.zoneCountThreshold));
+                    System.out.println(String.format("  p.matchBaseThreshold = %gf;", bestParams.matchBaseThreshold));
+                    System.out.println(String.format("  p.matchBestToSecondBestThreshold = %gf;",
+                            bestParams.matchBestToSecondBestThreshold));
+                }
+                else if(fitness + temp > annealFitness) {
+                    annealParams = params;
+                    annealFitness = fitness;
+                }
+                --iter;
             }
         }
 
         return bestParams;
     }
 
-    private static float evaluate(TimeCorrelatingRecognizer.Parameters params) {
-        float totalScore = 0f;
+    private static ExecutorService executorService = Executors.newWorkStealingPool();
 
-        for(RecognizerTestCase testCase: testCases) {
-            float score = scoreTestResults(testCase.testRecognizer(
-                    new TimeCorrelatingRecognizer(library, testCase.getFrequencyTransformer(), params)));
-            totalScore += score * testCase.getWeight();
+    private static float evaluate(TimeCorrelatingRecognizer.Parameters params) {
+        Vector<Callable<Float>> callables = new Vector<Callable<Float>>();
+
+        for (RecognizerTestCase testCase : testCases) {
+            callables.add(new Callable<Float>() {
+                @Override
+                public Float call() throws Exception {
+                    return testCase.getWeight() * scoreTestResults(testCase.testRecognizer(
+                            new TimeCorrelatingRecognizer(library, testCase.getFrequencyTransformer(), params)));
+                }
+            });
         }
-        return totalScore;
+
+        try {
+            float totalScore = 0f;
+            List<Future<Float>> futures = executorService.invokeAll(callables);
+            for (Future<Float> f : futures) {
+                totalScore += f.get().floatValue();
+            }
+            return totalScore;
+        } catch (Exception e) {
+            return Float.NEGATIVE_INFINITY;
+        }
     }
 
     private static float scoreTestResults(RecognizerTestCase.Results results) {
