@@ -1,104 +1,204 @@
 package org.vectrola.chirpchain.test0;
 
+import com.sun.xml.internal.rngom.digested.DDataPattern;
+
+import java.util.Random;
+
 /**
  * Created by jlunder on 6/16/15.
  */
 public class TimeCorrelatingRecognizer extends CodeRecognizer {
-    public static class Fingerprint extends CodeRecognizer.Fingerprint {
-        private int[][] pattern;
+    public static class Parameters {
+        private static final float ROW_THRESHOLD_MIN = 0.0001f;
+        private static final float ROW_THRESHOLD_MAX = 1f;
+        private static final float ROW_THRESHOLD_LOG_MIN = (float)Math.log(ROW_THRESHOLD_MIN);
+        private static final float ROW_THRESHOLD_LOG_MAX = (float)Math.log(ROW_THRESHOLD_MAX);
+        private static final float BIN_MINIMUM_MIN = -5f;
+        private static final float BIN_MINIMUM_MAX = 5f;
+        private static final float ZONE_THRESHOLD_MIN = 0.001f;
+        private static final float ZONE_THRESHOLD_MAX = 1f;
+        private static final float ZONE_THRESHOLD_LOG_MIN = (float)Math.log(ZONE_THRESHOLD_MIN);
+        private static final float ZONE_THRESHOLD_LOG_MAX = (float)Math.log(ZONE_THRESHOLD_MAX);
+        private static final int ZONE_COUNT_MIN = 1;
+        private static final int ZONE_COUNT_MAX = 16;
+        private static final float ZONE_COUNT_THRESHOLD_MIN = 0f;
+        private static final float ZONE_COUNT_THRESHOLD_MAX = 1f;
+        private static final float MATCH_BASE_THRESHOLD_MIN = 0f;
+        private static final float MATCH_BASE_THRESHOLD_MAX = 1f;
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MIN = 1e-3f;
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MAX = 1f;
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MIN =
+                (float)Math.log(MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MIN);
+        private static final float MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MAX =
+                (float)Math.log(MATCH_BEST_TO_SECOND_BEST_THRESHOLD_MAX);
 
-        public int[][] getPattern() {
-            return pattern;
+        public float rowThreshold;
+        public float binMinimum;
+        public float zoneThreshold;
+        public int zoneCount;
+        public float zoneCountThreshold;
+        public float matchBaseThreshold;
+        public float matchBestToSecondBestThreshold;
+
+        public Parameters() {
         }
 
-        protected Fingerprint(SampleSeries code) {
-            super(code);
-            makePattern();
+        public Parameters(Parameters other) {
+            rowThreshold = other.rowThreshold;
+            binMinimum = other.binMinimum;
+            zoneThreshold = other.zoneThreshold;
+            zoneCount = other.zoneCount;
+            zoneCountThreshold = other.zoneCountThreshold;
+            matchBaseThreshold = other.matchBaseThreshold;
+            matchBestToSecondBestThreshold = other.matchBestToSecondBestThreshold;
         }
 
-        private void makePattern() {
-            int rows = getMatchRows();
-            pattern = new int[rows][];
-            float mx = max(getBins());
-            float threshold = mx * 0.25f;
-            int[] rowTemp = new int[FrequencyTransformer.BINS_PER_ROW];
-            int rowTempUsed;
-            for (int j = 0; j < rows; ++j) {
-                rowTempUsed = 0;
-                for(int i = 0; i < FrequencyTransformer.BINS_PER_ROW; ++i) {
-                    int offset = j * FrequencyTransformer.BINS_PER_ROW + i;
-                    if(bins[offset] > threshold) {
-                        rowTemp[rowTempUsed++] = offset;
-                    }
-                }
-                pattern[j] = new int[rowTempUsed];
-                System.arraycopy(rowTemp, 0, pattern[j], 0, rowTempUsed);
+        public static Parameters makeRandom(Random r) {
+            Parameters p = new Parameters();
+
+            p.rowThreshold = randLogFloat(r, ROW_THRESHOLD_LOG_MIN, ROW_THRESHOLD_LOG_MAX);
+            p.binMinimum = randFloat(r, BIN_MINIMUM_MIN, BIN_MINIMUM_MAX);
+            p.zoneThreshold = randLogFloat(r, ZONE_THRESHOLD_LOG_MIN, ZONE_THRESHOLD_LOG_MAX);
+            p.zoneCount = randInt(r, ZONE_COUNT_MIN, ZONE_COUNT_MAX);
+            p.zoneCountThreshold = randFloat(r, ZONE_COUNT_THRESHOLD_MIN, ZONE_COUNT_THRESHOLD_MAX);
+            p.matchBaseThreshold = randFloat(r, MATCH_BASE_THRESHOLD_MIN, MATCH_BASE_THRESHOLD_MAX);
+            p.matchBestToSecondBestThreshold = randLogFloat(r, MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MIN,
+                    MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MAX);
+
+            return p;
+        }
+
+        private static int randInt(Random r, int min, int max) {
+            return r.nextInt(max - min + 1) + min;
+        }
+
+        private static float randFloat(Random r, float min, float max) {
+            return r.nextFloat() * (max - min) + min;
+        }
+
+        private static float randLogFloat(Random r, float logMin, float logMax) {
+            return (float)Math.exp(r.nextFloat() * (logMax - logMin) + logMin);
+        }
+
+        public Parameters mutate(Random r, float distance) {
+            Parameters p = new Parameters(this);
+
+            switch(r.nextInt(7)) {
+                case 0:
+                    p.rowThreshold = (float)Math.exp((1f - distance) * (float)Math.log(p.rowThreshold) +
+                            distance * randFloat(r, ROW_THRESHOLD_LOG_MIN, ROW_THRESHOLD_LOG_MAX));
+                    break;
+                case 1:
+                    p.binMinimum = (1f - distance) * p.binMinimum +
+                            distance * randFloat(r, BIN_MINIMUM_MIN, BIN_MINIMUM_MAX);
+                    break;
+                case 2:
+                    p.zoneThreshold = (float)Math.exp((1f - distance) * (float)Math.log(p.zoneThreshold) +
+                            distance * randFloat(r, ZONE_THRESHOLD_LOG_MIN, ZONE_THRESHOLD_LOG_MAX));
+                    break;
+                case 3:
+                    p.zoneCount = (int)Math.rint((1f - distance) * p.zoneCount +
+                            distance * randInt(r, ZONE_COUNT_MIN, ZONE_COUNT_MAX));
+                    break;
+                case 4:
+                    p.zoneCountThreshold = (1f - distance) * p.zoneCountThreshold +
+                            distance * randFloat(r, ZONE_COUNT_THRESHOLD_MIN, ZONE_COUNT_THRESHOLD_MAX);
+                    break;
+                case 5:
+                    p.matchBaseThreshold = (1f - distance) * p.matchBaseThreshold +
+                            distance * randFloat(r, MATCH_BASE_THRESHOLD_MIN, MATCH_BASE_THRESHOLD_MAX);
+                    break;
+                case 6:
+                    p.matchBestToSecondBestThreshold =
+                            (float)Math.exp((1f - distance) * (float)Math.log(p.matchBestToSecondBestThreshold) +
+                                    distance * randFloat(r, MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MIN,
+                                            MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MAX));
+                    break;
             }
+            return p;
+        }
+
+        public Parameters mutateAll(Random r, float distance) {
+            Parameters p = new Parameters(this);
+
+            p.rowThreshold = (float)Math.exp((1f - distance) * (float)Math.log(p.rowThreshold) +
+                    distance * randFloat(r, ROW_THRESHOLD_LOG_MIN, ROW_THRESHOLD_LOG_MAX));
+            p.binMinimum = (1f - distance) * p.binMinimum +
+                    distance * randFloat(r, BIN_MINIMUM_MIN, BIN_MINIMUM_MAX);
+            p.zoneThreshold = (float)Math.exp((1f - distance) * (float)Math.log(p.zoneThreshold) +
+                    distance * randFloat(r, ZONE_THRESHOLD_LOG_MIN, ZONE_THRESHOLD_LOG_MAX));
+            p.zoneCount = (int)Math.rint((1f - distance) * p.zoneCount +
+                    distance * randInt(r, ZONE_COUNT_MIN, ZONE_COUNT_MAX));
+            p.zoneCountThreshold = (1f - distance) * p.zoneCountThreshold +
+                    distance * randFloat(r, ZONE_COUNT_THRESHOLD_MIN, ZONE_COUNT_THRESHOLD_MAX);
+            p.matchBaseThreshold = (1f - distance) * p.matchBaseThreshold +
+                    distance * randFloat(r, MATCH_BASE_THRESHOLD_MIN, MATCH_BASE_THRESHOLD_MAX);
+            p.matchBestToSecondBestThreshold =
+                    (float)Math.exp((1f - distance) * (float)Math.log(p.matchBestToSecondBestThreshold) +
+                            distance * randFloat(r, MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MIN,
+                                    MATCH_BEST_TO_SECOND_BEST_THRESHOLD_LOG_MAX));
+
+            return p;
+        }
+
+        public Parameters combine(Random r, Parameters other) {
+            Parameters p = new Parameters();
+
+            p.rowThreshold = r.nextBoolean() ? rowThreshold : other.rowThreshold;
+            p.binMinimum = r.nextBoolean() ? binMinimum : other.binMinimum;
+            p.zoneThreshold = r.nextBoolean() ? zoneThreshold : other.zoneThreshold;
+            p.zoneCount = r.nextBoolean() ? zoneCount : other.zoneCount;
+            p.zoneCountThreshold = r.nextBoolean() ? zoneCountThreshold : other.zoneCountThreshold;
+            p.matchBaseThreshold = r.nextBoolean() ? matchBaseThreshold : other.matchBaseThreshold;
+            p.matchBestToSecondBestThreshold = r.nextBoolean() ? matchBestToSecondBestThreshold :
+                    other.matchBestToSecondBestThreshold;
+
+            return p;
         }
     }
 
-    TimeCorrelatingRecognizer(CodeLibrary library) {
-        super(library);
-        fingerprintLibrary();
+    public float rowThreshold = 0.7f;
+    public float binMinimum = -0.5f;
+    public float zoneThreshold = 0.5f;
+    public int zoneCount = 8;
+    public int zoneCountThreshold = 7;
+
+    TimeCorrelatingRecognizer(CodeLibrary library, FrequencyTransformer frequencyTransformer) {
+        super(library, frequencyTransformer, 0.5f, 0.01f);
     }
 
-    public void fingerprintLibrary() {
-        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            SampleSeries code = library.getCodeForSymbol(i);
-            codeFingerprints[i] = new Fingerprint(code);
-        }
+    TimeCorrelatingRecognizer(CodeLibrary library, FrequencyTransformer frequencyTransformer, Parameters params) {
+        super(library, frequencyTransformer, params.matchBaseThreshold, params.matchBestToSecondBestThreshold);
+
+        rowThreshold = params.rowThreshold;
+        binMinimum = params.binMinimum;
+        zoneThreshold = params.zoneThreshold;
+        zoneCount = params.zoneCount;
+        zoneCountThreshold = (int) Math.rint(params.zoneCountThreshold * zoneCount);
     }
 
-    public int tryFindMatch() {
-        float[] inputBinRows = new float[library.maxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
-        int bestSym = -1;
-        float bestQ = 0f;
-        float secondQ = 0f;
-        fingerprintFT.getBinRows(inputBinRows, library.maxCodeRows());
-
-        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
-            Fingerprint fp = (Fingerprint)getFingerprintForSymbol(i);
-            float q = matchQuality(fp, inputBinRows);
-            if (q > bestQ) {
-                secondQ = bestQ;
-                bestQ = q;
-                bestSym = i;
-            }
-        }
-
-        //System.out.print(String.format("R b %.4f s %.4f ", bestQ, secondQ));
-        if ((bestQ > 0.6f) && ((secondQ / bestQ) < 0.3f)) {
-            //System.out.print("Y!");
-            return bestSym;
-        } else {
-            //System.out.println("n.");
-            return -1;
-        }
-    }
-
-
-    public static float matchQuality(Fingerprint fp, float[] inputBinRows) {
+    public float matchQuality(CodeLibrary.Fingerprint fp, float[] inputBinRows) {
+        int rows = fp.getMatchRows();
         float q = 1f;
-        int hits = 0;
         int zoneHits = 0;
         int zoneSamples = 0;
         int lastZone = 0;
-        float threshold = 0.02f;
-        for (int i = 0; i < fp.pattern.length; ++i) {
+        int hits = 0;
+        for (int i = 0; i < rows; ++i) {
             float patternSum = 0f;
-            for (int j = 0; j < fp.pattern[i].length; ++j) {
-                patternSum += inputBinRows[fp.pattern[i][j]];
+            for (int p: fp.getPattern()[i]) {
+                patternSum += Math.max(inputBinRows[p], binMinimum);
             }
-            if (patternSum > threshold) {
+            if (patternSum > rowThreshold) {
                 ++zoneHits;
             }
             ++zoneSamples;
 
-            int zone = (i + 1) * 6 / fp.pattern.length;
+            int zone = (i + 1) * zoneCount / rows;
             if (zone != lastZone && zoneSamples > 0) {
                 float zoneQ = (float) zoneHits / zoneSamples;
                 q *= zoneQ;
-                if(zoneQ >= 0.5f) {
+                if(zoneQ >= zoneThreshold) {
                     ++hits;
                 }
                 lastZone = zone;
@@ -106,57 +206,7 @@ public class TimeCorrelatingRecognizer extends CodeRecognizer {
                 zoneSamples = 0;
             }
         }
-        return hits == 6 ? q : 0f;
-    }
 
-    /*
-    public static float matchQuality(Fingerprint fp, float[] inputBinRows) {
-        float q = 1f;
-        int hits = 0;
-        int zoneHits = 0;
-        int zoneSamples = 0;
-        int lastZone = 0;
-        float threshold = 0.1f;
-        for (int i = 0; i < fp.pattern.length; ++i) {
-            for (int j = 0; j < fp.pattern[i].length; ++j) {
-                if(inputBinRows[fp.pattern[i][j]] > 0f) {
-                    ++zoneHits;
-                }
-            }
-            zoneSamples += fp.pattern[i].length;
-
-            int zone = (i + 1) * 6 / fp.pattern.length;
-            if (zone != lastZone && zoneSamples > 0) {
-                float zoneQ = (float) zoneHits / zoneSamples;
-                q *= zoneQ;
-                if(zoneQ >= 0.6f) {
-                    ++hits;
-                }
-                lastZone = zone;
-                zoneHits = 0;
-                zoneSamples = 0;
-            }
-        }
-        return hits >= 5 ? q : 0f;
-    }
-    */
-
-
-    public static float max(float[] values) {
-        float maxValue = values[0];
-        for (int i = 0; i < values.length; ++i) {
-            maxValue = Math.max(maxValue, values[i]);
-        }
-        return maxValue;
-    }
-
-    public static float mean(float[] vals) {
-        float sum = 0f;
-
-        for (int i = 0; i < vals.length; ++i) {
-            sum += vals[i];
-        }
-
-        return sum / vals.length;
+        return hits >= zoneCountThreshold ? q : 0f;
     }
 }

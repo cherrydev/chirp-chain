@@ -3,67 +3,50 @@ package org.vectrola.chirpchain.test0;
 /**
  * Created by jlunder on 6/10/15.
  */
-public class CodeRecognizer {
-    public static class Fingerprint {
-        protected static final FrequencyTransformer ft = new FrequencyTransformer(false, true);
-        protected static final SampleSeries pad = new SampleSeries(FrequencyTransformer.WAVELET_WINDOW_SAMPLES);
-
-        protected SampleSeries code;
-        protected float[] bins;
-        private int matchRows;
-
-        public float[] getBins() {
-            return bins;
-        }
-
-        public int getMatchRows() {
-            return matchRows;
-        }
-
-        public Fingerprint(SampleSeries code) {
-            this.code = code;
-            this.matchRows = code.size() / FrequencyTransformer.ROW_SAMPLES;
-
-            int fingerprintRows;
-
-            synchronized (ft) {
-                ft.flush();
-                ft.addSamples(code);
-                ft.addSamples(pad);
-
-                bins = new float[matchRows * FrequencyTransformer.BINS_PER_ROW];
-                ft.getBinRows(bins, matchRows);
-            }
-
-        }
-    }
-
-    protected FrequencyTransformer fingerprintFT = new FrequencyTransformer(false, false);
-    protected CodeLibrary library;
-    protected Fingerprint[] codeFingerprints;
+public abstract class CodeRecognizer {
+   protected CodeLibrary library;
+    protected FrequencyTransformer frequencyTransformer;
 
     private boolean hasNextSymbol;
     private int nextSymbol;
-    private float time = 0f;
     private float lastSymbolTime = 0f;
     private int rowsSinceSymbolDetected = 0;
 
-    public CodeRecognizer(CodeLibrary library) {
+    private float matchBaseThreshold;
+    private float matchBestToSecondBestThreshold;
+
+    public CodeLibrary getLibrary() {
+        return library;
+    }
+
+    public FrequencyTransformer getFrequencyTransformer() {
+        return frequencyTransformer;
+    }
+
+    public CodeRecognizer(CodeLibrary library, FrequencyTransformer frequencyTransformer, float matchBaseThreshold, float matchBestToSecondBestThreshold) {
         this.library = library;
-        this.codeFingerprints = new Fingerprint[CodeLibrary.NUM_SYMBOLS];
+        this.frequencyTransformer = frequencyTransformer;
+        this.matchBaseThreshold = matchBaseThreshold;
+        this.matchBestToSecondBestThreshold = matchBestToSecondBestThreshold;
     }
 
-    public Fingerprint getFingerprintForSymbol(int symbol)
-    {
-        return codeFingerprints[symbol];
+    public boolean matchQualityGraph(float[] results) {
+        int resultRows = results.length / CodeLibrary.NUM_SYMBOLS;
+        float bins[] = new float[library.getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        for (int i = 0; i < resultRows; ++i) {
+            frequencyTransformer.getBinRows(bins, library.getMaxCodeRows());
+            for (int j = 0; j < CodeLibrary.NUM_SYMBOLS; ++j) {
+                results[i * CodeLibrary.NUM_SYMBOLS + j] = matchQuality(library.getFingerprintForSymbol(j), bins);
+            }
+            frequencyTransformer.discardRows(1);
+        }
+        return true;
     }
 
-    public void process(SampleSeries samples) {
-        fingerprintFT.addSamples(samples);
-    }
+    public abstract float matchQuality(CodeLibrary.Fingerprint fp, float[] inputBinRows);
 
     public boolean hasNextSymbol() {
-        if(!hasNextSymbol) {
+        if (!hasNextSymbol) {
             tryFillNextSymbol();
         }
         return hasNextSymbol;
@@ -84,35 +67,53 @@ public class CodeRecognizer {
         while (!hasNextSymbol && canMatch()) {
             int matchSym = tryFindMatch();
 
-            if(matchSym != -1) {
+            if (matchSym != -1) {
                 assert matchSym != -1;
-                int codeRows = getFingerprintForSymbol(matchSym).getMatchRows();
+                int codeRows = library.getFingerprintForSymbol(matchSym).getMatchRows();
                 hasNextSymbol = true;
                 rowsSinceSymbolDetected = 0;
                 nextSymbol = matchSym;
-                lastSymbolTime = time;
-                time += codeRows * FrequencyTransformer.ROW_TIME;
-                fingerprintFT.discardRows(codeRows - 2);
-            }
-            else {
+                lastSymbolTime = frequencyTransformer.getTime();
+                frequencyTransformer.discardRows(codeRows - 2);
+            } else {
                 ++rowsSinceSymbolDetected;
-                if(rowsSinceSymbolDetected > library.maxCodeRows()) {
+                if (rowsSinceSymbolDetected > library.getMaxCodeRows()) {
                     hasNextSymbol = true;
                     rowsSinceSymbolDetected = 0;
                     nextSymbol = -1; // break
                 }
-                time += FrequencyTransformer.ROW_TIME;
-                fingerprintFT.discardRows(1);
+                frequencyTransformer.discardRows(1);
             }
         }
     }
 
     protected boolean canMatch() {
-        return fingerprintFT.availableRows() >= library.maxCodeRows();
+        return frequencyTransformer.getAvailableRows() >= library.getMaxCodeRows();
     }
 
     protected int tryFindMatch() {
-        return -1;
-    }
+        float[] inputBinRows = new float[library.getMaxCodeRows() * FrequencyTransformer.BINS_PER_ROW];
+        int bestSym = -1;
+        float bestQ = 0f;
+        float secondQ = 0f;
+        frequencyTransformer.getBinRows(inputBinRows, library.getMaxCodeRows());
 
+        for (int i = 0; i < CodeLibrary.NUM_SYMBOLS; ++i) {
+            CodeLibrary.Fingerprint fp = library.getFingerprintForSymbol(i);
+            float q = matchQuality(fp, inputBinRows);
+            if (q > bestQ) {
+                secondQ = bestQ;
+                bestQ = q;
+                bestSym = i;
+            }
+        }
+
+        if ((bestQ > matchBaseThreshold) && ((secondQ / bestQ) < matchBestToSecondBestThreshold)) {
+            //System.out.print("Y!");
+            return bestSym;
+        } else {
+            //System.out.println("n.");
+            return -1;
+        }
+    }
 }
