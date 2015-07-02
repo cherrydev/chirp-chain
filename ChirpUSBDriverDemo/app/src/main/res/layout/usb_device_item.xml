@@ -47,10 +47,22 @@
         android:textColor="@android:color/holo_orange_light"
         android:textAlignment="center" />
 
-    <Switch
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable"
-        android:id="@+id/enable_switch" />
+        android:orientation="vertical">
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable"
+            android:id="@+id/enable_switch" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Monitor"
+            android:id="@+id/monitor_switch" />
+    </LinearLayout>
+
 
 </LinearLayout>

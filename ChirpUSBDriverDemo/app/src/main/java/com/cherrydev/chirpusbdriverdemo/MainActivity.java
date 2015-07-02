@@ -10,12 +10,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.cherrydev.usbaudiodriver.AudioPlayback;
 import com.cherrydev.usbaudiodriver.AudioWriteCallback;
 import com.cherrydev.usbaudiodriver.KnownDevices;
 import com.cherrydev.usbaudiodriver.UsbAudioDevice;
@@ -32,6 +34,9 @@ public class MainActivity extends ActionBarActivity {
     private boolean gotAudio;
     private Handler handler = new Handler();
     private Map<UsbAudioDevice, Integer> statusMap = new HashMap<>();
+    private UsbAudioDevice monitorDevice;
+    private ArrayAdapter<UsbAudioDevice> deviceListAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +57,9 @@ public class MainActivity extends ActionBarActivity {
                         gotAudio = true;
                         Log.d("AudioRecieve", String.format("Got %d audios!", length));
                     }
+                    if (audioDevice == monitorDevice) {
+                        AudioPlayback.write(data, length);
+                    }
                 }
             });
             audioDevices.add(audioDevice);
@@ -64,7 +72,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             }, 1000);
         }
-        final ArrayAdapter<UsbAudioDevice> deviceListAdapter = new ArrayAdapter<UsbAudioDevice>(this, R.layout.usb_device_item, audioDevices.toArray(new UsbAudioDevice[0])) {
+        deviceListAdapter = new ArrayAdapter<UsbAudioDevice>(this, R.layout.usb_device_item, audioDevices.toArray(new UsbAudioDevice[0])) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 final UsbAudioDevice device = getItem(position);
@@ -80,9 +88,22 @@ public class MainActivity extends ActionBarActivity {
                         if (isChecked) {
                             device.open();
                             device.beginReadAudio();
+                        } else {
+                            device.close();
+                        }
+                    }
+                });
+                CheckBox monitorCheck = ((CheckBox)convertView.findViewById(R.id.monitor_switch));
+                monitorCheck.setChecked(device == monitorDevice);
+                monitorCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (isChecked) {
+                            monitorDevice = device;
+                            AudioPlayback.setup();
                         }
                         else {
-                            device.close();
+                            monitorDevice = null;
                         }
                     }
                 });
