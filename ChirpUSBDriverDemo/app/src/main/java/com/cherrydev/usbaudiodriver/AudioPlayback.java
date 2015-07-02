@@ -18,19 +18,19 @@ import android.util.Log;
 public class AudioPlayback {
     private static final String TAG = "AudioPlayback";
 
-    private static final int SAMPLE_RATE_HZ = 48000;
+    //private static final int SAMPLE_RATE_HZ = 48000;
 
     private static AudioTrack track = null;
 
-    public static void setup() {
+    public static void setup(int sampleRate) {
         Log.i(TAG, "Audio Playback");
 
-        int bufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ,
+        int bufSize = AudioTrack.getMinBufferSize(sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
         Log.d(TAG, "Buf size: " + bufSize);
 
         track = new AudioTrack(AudioManager.STREAM_MUSIC,
-                SAMPLE_RATE_HZ,
+                sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufSize,
